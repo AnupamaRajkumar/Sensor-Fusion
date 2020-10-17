@@ -41,6 +41,14 @@ void Filters::DenoiseImage(Mat& origImg, Mat& noiseImg){
 	cout << "Performance metrics of written Gaussian filter" << endl;
 	this->PerformanceMetrics(origImg, output);
 
+	/*non-opencv implementation - separable kernel*/
+	output = this->GaussFilterSeparable(noiseImg);
+	imshow("GaussianSeparable", output);
+	imwrite("Gaussian_Separable.png", output);
+	cout << "----------------------------------------------------------------" << endl;
+	cout << "Performance metrics of written Gaussian filter with separabale kernels" << endl;
+	this->PerformanceMetrics(origImg, output);
+
 	// median
 	cv::medianBlur(noiseImg, output, this->kSize);
 	cv::imshow("opencv_median", output);
@@ -84,6 +92,21 @@ Mat Filters::BoxFilter(Mat& img) {
 	}
 	return filtImg.clone();
 }
+/*1D Gaussian Kernel*/
+Mat Filters::GaussianKernel1D() {
+	Mat kernel = Mat::ones(1, kSize, CV_32FC1);
+	float sum = 0.;
+	for (int i = -kSize / 2; i <= kSize / 2; i++) {
+		float denominator, power;
+		denominator = sqrt(2 * CV_PI)*this->stdDevX;
+		power = pow(((i) - this->meanX), 2) / (2 * pow(this->stdDevX, 2));
+		kernel.at<float>(i + kSize / 2) = exp(-power) / denominator;
+		sum = sum + kernel.at<float>(i + kSize / 2);
+	}
+	/*normalise the distribution*/
+	kernel /= sum;
+	return kernel;
+}
 
 /*2D Gaussian Kernel*/
 Mat Filters::GaussianKernel2D() {
@@ -92,10 +115,10 @@ Mat Filters::GaussianKernel2D() {
 	for (int r = -kSize / 2; r <= kSize / 2; r++) {
 		for (int c = -kSize / 2; c <= kSize / 2; c++) {
 			float denominator, power, xDist, yDist;
-			denominator = 2 * CV_PI * stdDevX * stdDevY;
-			xDist = pow(((r) - meanX), 2);
-			yDist = pow(((c) - meanY), 2);
-			power = 0.5*((xDist / pow(stdDevX, 2)) + (yDist / pow(stdDevY, 2)));
+			denominator = 2 * CV_PI * this->stdDevX * this->stdDevY;
+			xDist = pow(((r) - this->meanX), 2);
+			yDist = pow(((c) - this->meanY), 2);
+			power = 0.5*((xDist / pow(this->stdDevX, 2)) + (yDist / pow(this->stdDevY, 2)));
 			kernel.at<float>(r + kSize / 2, c + kSize / 2) = exp(-power) / denominator;
 			sum += kernel.at<float>(r + kSize / 2, c + kSize / 2);
 		}
@@ -107,12 +130,12 @@ Mat Filters::GaussianKernel2D() {
 
 /*Gaussian filtering*/
 Mat Filters::GaussFilter(Mat& img) {
-	Mat filtImg = Mat::zeros(img.size(), img.type());
+	Mat filtImg = Mat::ones(img.size(), img.type());
 	Mat kernel = this->GaussianKernel2D();
 	/*ignoring border handling*/
 	for (int r = kSize / 2; r < img.rows - kSize / 2; r++) {
 		for (int c = kSize / 2; c < img.cols - kSize / 2; c++) {
-			int sum = 0;
+			float sum = 0;
 			for (int i = -kSize / 2; i <= kSize / 2; i++) {
 				for (int j = -kSize / 2; j < kSize / 2; j++) {
 					sum += img.at<uchar>(r + i, c + j) * kernel.at<float>(i + kSize / 2, j + kSize / 2);
@@ -121,6 +144,43 @@ Mat Filters::GaussFilter(Mat& img) {
 			filtImg.at<uchar>(r, c) = sum;
 		}
 	}
+	return filtImg.clone();
+}
+
+Mat Filters::GaussFilterSeparable(Mat& img) {
+	Mat filtImg = Mat::ones(img.size(), img.type());
+	Mat temp = filtImg.clone();
+	Mat firstConv = filtImg.clone();
+	Mat secondConv = filtImg.clone();
+	/*first convolution*/
+	Mat kernel1 = this->GaussianKernel1D();
+	for (int r = kSize / 2; r < img.rows - kSize / 2; r++) {
+		for (int c = kSize / 2; c < img.cols - kSize / 2; c++) {
+			float sum = 0;
+			for (int i = 0; i < kernel1.rows; i++) {
+				for (int j = -kSize / 2; j < kSize / 2; j++) {
+					sum += img.at<uchar>(r + i, c + j) * kernel1.at<float>(i, j + kSize / 2);
+				}
+			}
+			firstConv.at<uchar>(r, c) = sum;
+		}
+	}
+	transpose(firstConv, temp);
+	/*second convolution*/
+	for (int r = kSize / 2; r < temp.rows - kSize / 2; r++) {
+		for (int c = kSize / 2; c < temp.cols - kSize / 2; c++) {
+			int sum = 0;
+			for (int i = 0; i < kernel1.rows; i++) {
+				for (int j = -kSize / 2; j < kSize / 2; j++) {
+					sum += temp.at<uchar>(r + i, c + j) * kernel1.at<float>(i, j + kSize / 2);
+				}
+			}
+			secondConv.at<uchar>(r, c) = sum;
+		}
+	}
+	/*transpose the result*/
+	transpose(secondConv, filtImg);
+
 	return filtImg.clone();
 }
 
