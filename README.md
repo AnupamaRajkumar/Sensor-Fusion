@@ -1,3 +1,4 @@
 # 3DSensing_SensorFusion
 
-Assignment 1 : Stereo Matching : Naive and dynamic approach
+Stereo Matching : Naive and dynamic approach
+Filtering : Different conventional - linear and non linear filtering techniques with performance metrics computation
