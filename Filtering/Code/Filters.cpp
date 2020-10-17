@@ -8,8 +8,7 @@ Filters::Filters() {
 	this->kSize = 3;
 	this->meanX = 0;
 	this->meanY = 0;
-	this->stdDevX = 25;
-	this->stdDevY = 25;
+	this->stdDev = 25;
 }
 
 
@@ -26,7 +25,7 @@ void Filters::DenoiseImage(Mat& origImg, Mat& noiseImg){
 
 	/*openCV implementation*/
 	// gaussian
-	cv::GaussianBlur(noiseImg, output, cv::Size(this->kSize, this->kSize), this->meanX, this->stdDevX);
+	cv::GaussianBlur(noiseImg, output, cv::Size(this->kSize, this->kSize), this->meanX, this->stdDev);
 	cv::imshow("opencv_gaussian", output);
 	imwrite("openCV_Gaussian.png", output);
 	cout << "-------------------------------------------------------------" << endl;
@@ -95,11 +94,15 @@ Mat Filters::BoxFilter(Mat& img) {
 /*1D Gaussian Kernel*/
 Mat Filters::GaussianKernel1D() {
 	Mat kernel = Mat::ones(1, kSize, CV_32FC1);
+	float k = 2.5;
+	float rmax = sqrt(2 * pow(kSize / 2, 2));
+	float sigma = rmax / k;
 	float sum = 0.;
 	for (int i = -kSize / 2; i <= kSize / 2; i++) {
 		float denominator, power;
-		denominator = sqrt(2 * CV_PI)*this->stdDevX;
-		power = pow(((i) - this->meanX), 2) / (2 * pow(this->stdDevX, 2));
+		denominator = sqrt(2 * CV_PI)*sigma;
+		//denominator = 1;
+		power = pow(((i) - this->meanX), 2) / (2 * pow(sigma, 2));
 		kernel.at<float>(i + kSize / 2) = exp(-power) / denominator;
 		sum = sum + kernel.at<float>(i + kSize / 2);
 	}
@@ -111,14 +114,18 @@ Mat Filters::GaussianKernel1D() {
 /*2D Gaussian Kernel*/
 Mat Filters::GaussianKernel2D() {
 	Mat kernel = Mat::ones(kSize, kSize, CV_32FC1);
+	float k = 2.5;
+	float rmax = sqrt(2 * pow(kSize / 2, 2));
+	float sigma = rmax / k;
 	float sum = 0.0;
 	for (int r = -kSize / 2; r <= kSize / 2; r++) {
 		for (int c = -kSize / 2; c <= kSize / 2; c++) {
 			float denominator, power, xDist, yDist;
-			denominator = 2 * CV_PI * this->stdDevX * this->stdDevY;
+			denominator = 2 * CV_PI * sigma * sigma;
+			//denominator = 1;
 			xDist = pow(((r) - this->meanX), 2);
 			yDist = pow(((c) - this->meanY), 2);
-			power = 0.5*((xDist / pow(this->stdDevX, 2)) + (yDist / pow(this->stdDevY, 2)));
+			power = 0.5*((xDist / pow(sigma, 2)) + (yDist / pow(sigma, 2)));
 			kernel.at<float>(r + kSize / 2, c + kSize / 2) = exp(-power) / denominator;
 			sum += kernel.at<float>(r + kSize / 2, c + kSize / 2);
 		}
@@ -148,7 +155,8 @@ Mat Filters::GaussFilter(Mat& img) {
 }
 
 Mat Filters::GaussFilterSeparable(Mat& img) {
-	Mat filtImg = Mat::ones(img.size(), img.type());
+	//Mat filtImg = Mat::ones(img.size(), img.type());
+	Mat filtImg = img.clone();
 	Mat temp = filtImg.clone();
 	Mat firstConv = filtImg.clone();
 	Mat secondConv = filtImg.clone();
