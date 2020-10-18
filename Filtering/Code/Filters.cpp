@@ -249,6 +249,7 @@ void Filters::PerformanceMetrics(Mat& origImg, Mat& denoisedImg) {
 	cout << "Structural similarity of the image : " << ssimVal << endl;
 }
 
+/*http://www.cns.nyu.edu/pub/eero/wang03-reprint.pdf*/
 /*Calculating structural similarity index*/
 float Filters::SSIMCalculation(Mat& origImg, Mat& denoisedImg) {
 	/*step 1 : Calculate mean intensity of each image*/
