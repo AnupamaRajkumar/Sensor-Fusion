@@ -18,9 +18,6 @@ Extra points : parallelising/fast implementation, compare solution to existing i
 #include "NaiveApproach.h"
 #include "Utility.h"
 
-using namespace std;
-using namespace cv;
-
 
 int main(int argc, char** argv) {
 
@@ -43,36 +40,36 @@ int main(int argc, char** argv) {
   ///////////////////////////
 
   if (argc < 3) {
-    cerr << "Usage: " << argv[0] << " IMAGE1 IMAGE2 " << std::endl;
+    std::cerr << "Usage: " << argv[0] << " IMAGE1 IMAGE2 " << std::endl;
     return 1;
   }
 
-  Mat image1 = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
-  Mat image2 = cv::imread(argv[2], cv::IMREAD_GRAYSCALE);
+  cv::Mat image1 = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+  cv::Mat image2 = cv::imread(argv[2], cv::IMREAD_GRAYSCALE);
 
   if (!image1.data) {
-    cerr << "No image1 data" << std::endl;
+    std::cerr << "No image1 data" << std::endl;
     return EXIT_FAILURE;
   }
 
   if (!image2.data) {
-    cerr << "No image2 data" << std::endl;
+    std::cerr << "No image2 data" << std::endl;
     return EXIT_FAILURE;
   }
 
-  cout << "Enter the window size:" << endl;
-  cin >> window_size;
-  cout << "Enter the occlusion weights:" << endl;
-  cin >> weight;
+  std::cout << "Enter the window size:" << std::endl;
+  std::cin >> window_size;
+  std::cout << "Enter the occlusion weights:" << std::endl;
+  std::cin >> weight;
 
-  cout << "------------------ Parameters -------------------" << std::endl;
-  cout << "focal_length = " << focal_length << std::endl;
-  cout << "baseline = " << baseline << std::endl;
-  cout << "window_size = " << window_size << std::endl;
-  cout << "occlusion weights = " << weight << std::endl;
-  cout << "disparity added due to image cropping = " << dmin << std::endl;
-  cout << "scaling of disparity images to show = " << scale << std::endl;
-  cout << "-------------------------------------------------" << std::endl;
+  std::cout << "------------------ Parameters -------------------" << std::endl;
+  std::cout << "focal_length = " << focal_length << std::endl;
+  std::cout << "baseline = " << baseline << std::endl;
+  std::cout << "window_size = " << window_size << std::endl;
+  std::cout << "occlusion weights = " << weight << std::endl;
+  std::cout << "disparity added due to image cropping = " << dmin << std::endl;
+  std::cout << "scaling of disparity images to show = " << scale << std::endl;
+  std::cout << "-------------------------------------------------" << std::endl;
 
 
   /*class instantiation*/
@@ -85,28 +82,22 @@ int main(int argc, char** argv) {
   ////////////////////
   while (choice != 5) {
 
-	  cout << "Reconstruction Menu:" << endl;
-	  cout << "1. Naive Approach" << endl;
-	  cout << "2. Dynamic Programming Approach" << endl;
-	  cout << "3. OpenCV stereo matching methods" << endl;
-	  cout << "4. Generation of point clouds" << endl;
-	  cout << "5. Exit" << endl;
-	  cout << "Enter your choice:" << endl;
-	  cin >> choice;
-	  cout << "----------------------------------------------------" << endl;
+	  std::cout << "\nReconstruction Menu:" << std::endl;
+	  std::cout << "1. Naive Approach" << std::endl;
+	  std::cout << "2. Dynamic Programming Approach" << std::endl;
+	  std::cout << "3. OpenCV stereo matching methods" << std::endl;
+	  std::cout << "4. Generation of point clouds" << std::endl;
+	  std::cout << "5. Exit" << std::endl;
+	  std::cout << "Enter your choice:" << std::endl;
+	  std::cin >> choice;
+	  std::cout << "----------------------------------------------------" << std::endl;
 	
-	  stringstream out1;
-	  Mat naive_disparities = cv::Mat::zeros(image1.size().height, image1.size().width, CV_8UC1);
+	  std::stringstream out1;
+	  cv::Mat naive_disparities = cv::Mat::zeros(image1.size().height, image1.size().width, CV_8UC1);
 	  switch (choice) {
 		case 1:
 			// Naive disparity image		
-			//utility.StereoEstimation_Naive(window_size, dmin, image1, image2, naive_disparities, scale);
 			naive.NaiveMatchingCalculation();
-			// save / display images
-			/*out1 << output_file << "_naive.png";
-			imwrite(out1.str(), naive_disparities);
-			namedWindow("Naive", cv::WINDOW_AUTOSIZE);
-			imshow("Naive", naive_disparities);*/
 			break;
 		case 2:
 			/*openCV stereo matching methods*/
@@ -122,12 +113,12 @@ int main(int argc, char** argv) {
 			exit(0);
 			break;
 		default:
-			cout << "Enter correct choice" << endl;
+			std::cout << "Enter correct choice" << std::endl;
 			break;
 	  }
   }
 
-  waitKey(0);
+  cv::waitKey(0);
 
   return 0;
 }
