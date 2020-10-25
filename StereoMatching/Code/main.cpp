@@ -12,8 +12,6 @@ Extra points : parallelising/fast implementation, compare solution to existing i
 #include <iostream>
 #include <string> 
 
-
-
 #include "DynamicApproach.h"
 #include "NaiveApproach.h"
 #include "Utility.h"
@@ -75,6 +73,8 @@ int main(int argc, char** argv) {
   /*class instantiation*/
   Utility utility;
   Naive naive(window_size, image1, image2, dmin, focal_length, baseline);
+  Dynamic dynamic(image1, image2, dmin, window_size, weight);
+
 
   int choice = 1;
   ////////////////////
@@ -96,13 +96,14 @@ int main(int argc, char** argv) {
 	  cv::Mat naive_disparities = cv::Mat::zeros(image1.size().height, image1.size().width, CV_8UC1);
 	  switch (choice) {
 		case 1:
-			// Naive disparity image		
+			/*Naive disparity image	*/	
 			naive.NaiveMatchingCalculation();
 			break;
 		case 2:
 			/*openCV stereo matching methods*/
 		case 3:
 			/*Dynamic programming approach*/
+			dynamic.DynamicApproachCalculation();
 			break;
 		case 4:
 			// reconstruction

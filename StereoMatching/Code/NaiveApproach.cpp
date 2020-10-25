@@ -1,5 +1,13 @@
 #include "NaiveApproach.h"
 
+/*****************************************************************************
+Naive approach primarily consists of following steps ie. a typical stereo pipeline
+comprises of following steps:
+1. Matching cost computation
+2. Cost aggregation
+3. Disparity computation
+4. Disparity refinement - consistency check, hole filling, removing spurious matches etc
+**********************************************************************************/
 
 /*Constructor*/
 Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, double focal_length, double baseline) {
@@ -262,9 +270,16 @@ void Naive::NaiveMatching_CrossCorrelation() {
 			for (int d = -c + this->winSize / 2; d < this->img1.cols - c - this->winSize / 2; ++d) {
 				/*window around the epipolar line for both the images*/
 				int cc = 0;
+				int mean1, mean2;
+				mean1 = mean2 = 0;
 				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
 					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
-						cc += this->img1.at<uchar>(r + i, c + j) * this->img2.at<uchar>(r + i, c + j + d);
+						/*calculate mean of each patch for both the images*/
+						mean1 += this->img1.at<uchar>(r + i, c + j);
+						mean1 /= (this->winSize * this->winSize);
+						mean2 += this->img2.at<uchar>(r + i, c + j + d);
+						mean2 /= (this->winSize * this->winSize);
+						cc += (this->img1.at<uchar>(r + i, c + j) - mean1) * (this->img2.at<uchar>(r + i, c + j + d) - mean2);
 					}
 				}
 				if (cc > maxCC) {
