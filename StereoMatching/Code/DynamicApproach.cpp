@@ -19,7 +19,7 @@ Dynamic::Dynamic(cv::Mat& image1, cv::Mat& image2, int dmin, int window_size, do
 void Dynamic::DynamicApproachCalculation() {
 	cv::Mat naive_disparities = cv::Mat::zeros(this->img1.size(), CV_8UC1);
 	/*going through each horizontal scanline one by one*/
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int r = this->winSize / 2; r < this->img1.rows - this->winSize / 2; r++) {
 		std::vector<uchar> DSI = this->DisparitySpaceImage(r);
 		this->FindMinimumCostPath(DSI);
@@ -49,13 +49,14 @@ std::vector<uchar> Dynamic::DisparitySpaceImage(int r) {
 void Dynamic::FindMinimumCostPath(std::vector<uchar>& DSI) {
 
 	for (int r = 0; r < DSI.size(); r++) {
-		/*right occlusion*/
+		//right occlusion
 		C.at<uchar>(r, 0) = DSI[r];
 		M.at<uchar>(r, 0) = RightOcc;
-		/*left occlusion*/
+		//left occlusion
 		C.at<uchar>(0, r) = DSI[r];
 		M.at<uchar>(0, r) = LeftOcc;
 	}
+
 
 	for (int r = 1; r < C.rows; r++) {
 		for (int c = 1; c < C.cols; c++) {
@@ -79,27 +80,31 @@ void Dynamic::FindMinimumCostPath(std::vector<uchar>& DSI) {
 	//cv::imwrite("CostMatrix.png", C);
 }
 
+/*http://www.epixea.com/research/multi-view-coding-thesisch3.html#ref-Bobick1999*/
 void Dynamic::ReconstructOptimalPath(int r, cv::Mat& naive_disparities) {
 	int row = M.rows - 1;
 	int col = M.cols - 1;
 	int disparity = 0;
 	while (row != 0 && col != 0) {
+		//std::cout << int(M.at<uchar>(row, col)) << std::endl;
 		switch (int(M.at<uchar>(row, col))) {
 		case Match:
-			disparity = abs(col - 1);
+			disparity = row;
 			row--;
 			col--;
 			break;
 		case LeftOcc:
-			//disparity = abs(col);
+			disparity = row - 1;
 			row--;
 			break;
 		case RightOcc:
-			//disparity = abs(col - 1);			
+			//disparity = abs(row);			
 			col--;
 			break;
 		}
-		naive_disparities.at<uchar>(r - this->winSize / 2, col) = (disparity * 255) / dmin;
+		//std::cout << "disparity:" << disparity << std::endl;
+		naive_disparities.at<uchar>(r - this->winSize / 2, col) = (disparity * 255) / dmin;				//;		
+		//std::cout << int(naive_disparities.at<uchar>(r - this->winSize / 2, col)) << std::endl;
 	}
 }
 
