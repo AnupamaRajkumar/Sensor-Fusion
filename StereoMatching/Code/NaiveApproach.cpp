@@ -18,7 +18,7 @@ Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, double
 	this->img1 = image1.clone();
 	this->img2 = image2.clone();
 	this->dmin = dmin;
-	this->dmax = 200;
+	this->dmax = 128;
 	this->focal_length = focal_length;
 	this->baseline = baseline;
 }
@@ -90,9 +90,7 @@ void Naive::NaiveMatching_SAD() {
 					
 				}
 			}
-			//std::cout << "disparity:" << disparity << std::endl;
 			naive_disparities.at<uchar>(r - this->winSize / 2, c - this->winSize / 2) = (disparity * 255) / dmin;
-			//std::cout << int(naive_disparities.at<uchar>(r - this->winSize / 2, c - this->winSize / 2)) << std::endl;
 		}
 	}
 	std::string fileName = "NaiveMatching_SAD.png";
@@ -347,13 +345,37 @@ void Naive::NaiveMatching_NormalisedCrossCorrelation() {
 }
 
 void Naive::NaiveMatching_OpenCV() {
+
 	/*stereoBM opencv implementation*/
-	std::cout << "OpenCV StereoBM" << std::endl;
-	cv::Mat naive_disparities;
+	std::cout << "-------------OpenCV StereoBM---------------" << std::endl;
+	cv::Mat naive_disparities = cv::Mat::zeros(this->img1.size(), CV_16S);
 	cv::Ptr<cv::StereoBM> sbm = cv::StereoBM::create(this->dmax, this->winSize);
 	sbm->compute(this->img1, this->img2, naive_disparities);
-	std::string fileName = "OpenCV_StereoBM.png";
-	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string fileNameBM = "OpenCV_StereoBM.png";
+	utility.saveDisparityImage(fileNameBM, naive_disparities);
+	std::cout << "------------StereoBM generated-------------" << std::endl;
+
+	/*StereoBinarySGBM*/
+	std::cout << "------------OpenCV StereoSGBM---------------" << std::endl;
+	cv::Ptr<cv::StereoSGBM> sgbm = cv::StereoSGBM::create(0, this->dmax, this->winSize,
+														 (8 * this->winSize*this->winSize), 
+														 (32 * this->winSize*this->winSize), 
+														  1, 0, 5, 64, 16, cv::StereoSGBM::MODE_SGBM);
+	sgbm->compute(this->img1, this->img2, naive_disparities);
+	std::string fileNameSGBM = "OpenCV_StereoSGBM.png";
+	utility.saveDisparityImage(fileNameSGBM, naive_disparities);
+	std::cout << "------------StereoSGBM generated-------------" << std::endl;
+
+	/*StereoBinaryHH*/
+	std::cout << "OpenCV StereoHH" << std::endl;
+	cv::Ptr<cv::StereoSGBM> hh = cv::StereoSGBM::create(0, this->dmax, this->winSize,
+														 (8 * this->winSize*this->winSize),
+														 (32 * this->winSize*this->winSize),
+														  1, 0, 5, 64, 16, cv::StereoSGBM::MODE_HH);
+	hh->compute(this->img1, this->img2, naive_disparities);
+	std::string fileNameHH = "OpenCV_StereoHH.png";
+	utility.saveDisparityImage(fileNameHH, naive_disparities);
+	std::cout << "StereoHH generated" << std::endl;
 }
 	
 

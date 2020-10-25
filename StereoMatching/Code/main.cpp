@@ -33,9 +33,7 @@ int main(int argc, char** argv) {
   double weight = 500;
   const double scale = 3;
 
-  ///////////////////////////
-  // Commandline arguments //
-  ///////////////////////////
+  // Commandline arguments 
 
   if (argc < 3) {
     std::cerr << "Usage: " << argv[0] << " IMAGE1 IMAGE2 " << std::endl;
@@ -75,19 +73,17 @@ int main(int argc, char** argv) {
   Naive naive(window_size, image1, image2, dmin, focal_length, baseline);
   Dynamic dynamic(image1, image2, dmin, window_size, weight);
 
-
   int choice = 1;
-  ////////////////////
-  // Reconstruction menu //
-  ////////////////////
-  while (choice != 5) {
 
-	  std::cout << "\nReconstruction Menu:" << std::endl;
+  // Stereo Correspondence Menu 
+
+  while (choice != 4) {
+
+	  std::cout << "\nStereo Correspondence Menu:" << std::endl;
 	  std::cout << "1. Naive Approach" << std::endl;
 	  std::cout << "2. OpenCV stereo matching methods" << std::endl;
 	  std::cout << "3. Dynamic Programming Approach" << std::endl;
-	  std::cout << "4. Generation of point clouds" << std::endl;
-	  std::cout << "5. Exit" << std::endl;
+	  std::cout << "4. Exit" << std::endl;
 	  std::cout << "Enter your choice:" << std::endl;
 	  std::cin >> choice;
 	  std::cout << "----------------------------------------------------" << std::endl;
@@ -108,11 +104,6 @@ int main(int argc, char** argv) {
 			dynamic.DynamicApproachCalculation();
 			break;
 		case 4:
-			// reconstruction
-			/*utility.Disparity2PointCloud(output_file, image1.size().height, image1.size().width, naive_disparities,
-				window_size, dmin, baseline, focal_length);*/
-			break;
-		case 5:
 			exit(0);
 			break;
 		default:

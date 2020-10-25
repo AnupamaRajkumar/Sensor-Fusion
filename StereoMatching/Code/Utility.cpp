@@ -1,8 +1,8 @@
 #include "Utility.h"
 
 
-void Utility::Disparity2PointCloud(const std::string& output_file, int height, int width, cv::Mat& disparities, const int& window_size,
-	const int& dmin, const double& baseline, const double& focal_length)
+void Utility::Disparity2PointCloud(std::string& output_file, int height, int width, cv::Mat& disparities, int& window_size,
+									int& dmin, double& baseline, double& focal_length)
 {
 	std::stringstream out3d;
 	out3d << output_file << ".xyz";
@@ -12,15 +12,12 @@ void Utility::Disparity2PointCloud(const std::string& output_file, int height, i
 		for (int j = 0; j < width - window_size; ++j) {
 			if (disparities.at<uchar>(i, j) == 0) continue;
 
-			// TODO
-			//const double Z = ...
-			//const double X = ...
-			//const double Y = ...
-			//
+			//double Z = (baseline * focal_length) / disparities.at<uchar>(i, j);
+			//double X = -baseline * () / 2 * disparities.at<uchar>(i, j);
+			//double Y = baseline * / disparities.at<uchar>(i, j);
 			//outfile << X << " " << Y << " " << Z << std::endl;
 		}
 	}
-
 	std::cout << "Reconstructing 3D point cloud from disparities... Done.\r" << std::flush;
 	std::cout << std::endl;
 }

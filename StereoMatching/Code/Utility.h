@@ -10,12 +10,8 @@
 
 class Utility {
 public:
-
-	void Disparity2PointCloud(
-		const std::string& output_file,
-		int height, int width, cv::Mat& disparities,
-		const int& window_size,
-		const int& dmin, const double& baseline, const double& focal_length);
+	void Disparity2PointCloud(std::string& output_file, int height, int width, cv::Mat& disparities, int& window_size, 
+							  int& dmin, double& baseline, double& focal_length);
 	void saveDisparityImage(std::string& fileName, cv::Mat& disparity);
 
 };
