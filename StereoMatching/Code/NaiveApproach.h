@@ -6,6 +6,7 @@
 #include <iostream>
 #include <omp.h>
 #include <Windows.h>
+#include <opencv2/calib3d.hpp>
 
 
 class Naive {
@@ -15,7 +16,7 @@ public:
 	void NaiveMatching_OpenCV();			//Opencv stereo matching methods
 
 private:
-	int winSize, dmin;
+	int winSize, dmin, dmax;
 	cv::Mat img1, img2;
 	double focal_length, baseline;
 
@@ -27,7 +28,6 @@ private:
 	void NaiveMatching_LSSAD();									//locally scaled sum of squared intensity difference
 	void NaiveMatching_NormalisedCrossCorrelation();			//normalised cross correlation
 	void NaiveMatching_CrossCorrelation();						//normalised sum of squared intensity difference
-	void saveDisparityImage(std::string& fileName, cv::Mat& disparity);
 
 };
 #endif // !__NAIVE__

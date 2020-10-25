@@ -1,4 +1,5 @@
 #include "NaiveApproach.h"
+#include "Utility.h"
 
 /*****************************************************************************
 Naive approach primarily consists of following steps ie. a typical stereo pipeline
@@ -9,12 +10,15 @@ comprises of following steps:
 4. Disparity refinement - consistency check, hole filling, removing spurious matches etc
 **********************************************************************************/
 
+Utility utility;
+
 /*Constructor*/
 Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, double focal_length, double baseline) {
 	this->winSize = window_size;	
 	this->img1 = image1.clone();
 	this->img2 = image2.clone();
 	this->dmin = dmin;
+	this->dmax = 200;
 	this->focal_length = focal_length;
 	this->baseline = baseline;
 }
@@ -83,13 +87,16 @@ void Naive::NaiveMatching_SAD() {
 				if (sad < minSAd) {
 					minSAd = sad;
 					disparity = abs(d);
+					
 				}
 			}
+			//std::cout << "disparity:" << disparity << std::endl;
 			naive_disparities.at<uchar>(r - this->winSize / 2, c - this->winSize / 2) = (disparity * 255) / dmin;
+			//std::cout << int(naive_disparities.at<uchar>(r - this->winSize / 2, c - this->winSize / 2)) << std::endl;
 		}
 	}
 	std::string fileName = "NaiveMatching_SAD.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 /*https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8570471*/
@@ -128,7 +135,7 @@ void Naive::NaiveMatching_ZSAD() {
 		}
 	}
 	std::string fileName = "NaiveMatching_ZSAD.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 /*Locally scaled square of absolute differences (LSSAD)*/
@@ -172,7 +179,7 @@ void Naive::NaiveMatching_LSSAD() {
 		}
 	}
 	std::string fileName = "NaiveMatching_LSSAD.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 
@@ -204,7 +211,7 @@ void Naive::NaiveMatching_SSD() {
 		}
 	}
 	std::string fileName = "NaiveMatching_SSD.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 
@@ -252,7 +259,7 @@ void Naive::NaiveMatching_NormalisedSSD() {
 		}
 	}
 	std::string fileName = "NaiveMatching_NSSD.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 /*https://core.ac.uk/download/pdf/51249268.pdf*/
@@ -291,7 +298,7 @@ void Naive::NaiveMatching_CrossCorrelation() {
 		}
 	}
 	std::string fileName = "NaiveMatching_CC.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 void Naive::NaiveMatching_NormalisedCrossCorrelation() {
@@ -336,15 +343,18 @@ void Naive::NaiveMatching_NormalisedCrossCorrelation() {
 		}
 	}
 	std::string fileName = "NaiveMatching_NCC.png";
-	this->saveDisparityImage(fileName, naive_disparities);
-}
-
-void Naive::saveDisparityImage(std::string& fileName, cv::Mat& disparity) {
-	cv::imwrite(fileName, disparity);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 void Naive::NaiveMatching_OpenCV() {
-
+	/*stereoBM opencv implementation*/
+	std::cout << "OpenCV StereoBM" << std::endl;
+	cv::Mat naive_disparities;
+	cv::Ptr<cv::StereoBM> sbm = cv::StereoBM::create(this->dmax, this->winSize);
+	sbm->compute(this->img1, this->img2, naive_disparities);
+	std::string fileName = "OpenCV_StereoBM.png";
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
+	
 
 

@@ -13,13 +13,14 @@ public:
 	void DynamicApproachCalculation();
 
 private:
-	int occlusion, winSize, dmin;
+	int winSize, dmin;
+	double occlusion;
 	cv::Mat C, M, img1, img2;
 
 	void FindMinimumCostPath(std::vector<uchar>& DSI);
 	void ReconstructOptimalPath(int r, cv::Mat& naive_disparities);
 	std::vector<uchar> DisparitySpaceImage(int r);
-	void saveDisparityImage(std::string& fileName, cv::Mat& disparity);
+	
 
 	enum MatMat
 	{

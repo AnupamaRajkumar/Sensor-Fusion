@@ -16,6 +16,7 @@ public:
 		int height, int width, cv::Mat& disparities,
 		const int& window_size,
 		const int& dmin, const double& baseline, const double& focal_length);
+	void saveDisparityImage(std::string& fileName, cv::Mat& disparity);
 
 };
 

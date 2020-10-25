@@ -84,8 +84,8 @@ int main(int argc, char** argv) {
 
 	  std::cout << "\nReconstruction Menu:" << std::endl;
 	  std::cout << "1. Naive Approach" << std::endl;
-	  std::cout << "2. Dynamic Programming Approach" << std::endl;
-	  std::cout << "3. OpenCV stereo matching methods" << std::endl;
+	  std::cout << "2. OpenCV stereo matching methods" << std::endl;
+	  std::cout << "3. Dynamic Programming Approach" << std::endl;
 	  std::cout << "4. Generation of point clouds" << std::endl;
 	  std::cout << "5. Exit" << std::endl;
 	  std::cout << "Enter your choice:" << std::endl;
@@ -101,6 +101,8 @@ int main(int argc, char** argv) {
 			break;
 		case 2:
 			/*openCV stereo matching methods*/
+			naive.NaiveMatching_OpenCV();
+			break;
 		case 3:
 			/*Dynamic programming approach*/
 			dynamic.DynamicApproachCalculation();

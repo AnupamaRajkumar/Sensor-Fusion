@@ -24,3 +24,7 @@ void Utility::Disparity2PointCloud(const std::string& output_file, int height, i
 	std::cout << "Reconstructing 3D point cloud from disparities... Done.\r" << std::flush;
 	std::cout << std::endl;
 }
+
+void Utility::saveDisparityImage(std::string& fileName, cv::Mat& disparity) {
+	cv::imwrite(fileName, disparity);
+}

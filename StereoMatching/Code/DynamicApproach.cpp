@@ -1,4 +1,5 @@
 #include "DynamicApproach.h"
+#include "Utility.h"
 
 /******************************************************
 No aggregation step
@@ -17,6 +18,7 @@ Dynamic::Dynamic(cv::Mat& image1, cv::Mat& image2, int dmin, int window_size, do
 
 /*Dynmaic approach calculation menu*/
 void Dynamic::DynamicApproachCalculation() {
+	Utility utility;
 	cv::Mat naive_disparities = cv::Mat::zeros(this->img1.size(), CV_8UC1);
 	/*going through each horizontal scanline one by one*/
 #pragma omp parallel for
@@ -26,7 +28,7 @@ void Dynamic::DynamicApproachCalculation() {
 		this->ReconstructOptimalPath(r, naive_disparities);
 	}
 	std::string fileName = "DynamicProgrammingEnergyMin.png";
-	this->saveDisparityImage(fileName, naive_disparities);
+	utility.saveDisparityImage(fileName, naive_disparities);
 }
 
 std::vector<uchar> Dynamic::DisparitySpaceImage(int r) {
@@ -112,6 +114,3 @@ void Dynamic::ReconstructOptimalPath(int r, cv::Mat& naive_disparities) {
 	}
 }
 
-void Dynamic::saveDisparityImage(std::string& fileName, cv::Mat& disparity) {
-	cv::imwrite(fileName, disparity);
-}
