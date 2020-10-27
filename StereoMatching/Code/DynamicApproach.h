@@ -9,19 +9,21 @@
 
 class Dynamic {
 public:
-	Dynamic(cv::Mat& image1, cv::Mat& image2, int dmin, int window_size, double weight);
+	Dynamic(cv::Mat& image1, cv::Mat& image2, int window_size, float weight, int dmin,
+			double focal_length, double baseline, double cx_d, double cy_d, double doffs);
 	void DynamicApproachCalculation();
 
 private:
 	int winSize, dmin;
-	double occlusion;
+	double cx_d, cy_d, doffs, focal_length, baseline;
+	float occlusion;
 	cv::Mat C, M, img1, img2;
 
-	void FindMinimumCostPath(std::vector<uchar>& DSI);
+	void FindMinimumCostPath(int r);
 	void ReconstructOptimalPath(int r, cv::Mat& naive_disparities);
-	std::vector<uchar> DisparitySpaceImage(int r);
+	float DisparitySpaceImage(int row, int lr, int rr);
+	//void calculateDynamicStereo();
 	
-
 	enum MatMat
 	{
 		Match = 0,				

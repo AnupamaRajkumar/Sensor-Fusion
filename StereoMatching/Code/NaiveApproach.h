@@ -11,14 +11,15 @@
 
 class Naive {
 public:
-	Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, double focal_length, double baseline);
+	Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, 
+		  double focal_length, double baseline, double cx_d, double cy_d, double doffs);
 	void NaiveMatchingCalculation();
 	void NaiveMatching_OpenCV();			//Opencv stereo matching methods
 
 private:
 	int winSize, dmin, dmax;
 	cv::Mat img1, img2;
-	double focal_length, baseline;
+	double focal_length, baseline, cx_d, cy_d, doffs;
 
 	/*http://www.cs.cmu.edu/~16385/s17/Slides/13.2_Stereo_Matching.pdf*/
 	void NaiveMatching_SSD();									//sum of squared intensity difference

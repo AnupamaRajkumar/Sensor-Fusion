@@ -13,7 +13,8 @@ comprises of following steps:
 Utility utility;
 
 /*Constructor*/
-Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, double focal_length, double baseline) {
+Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, 
+			 double focal_length, double baseline, double cx_d, double cy_d, double doffs) {
 	this->winSize = window_size;	
 	this->img1 = image1.clone();
 	this->img2 = image2.clone();
@@ -21,6 +22,9 @@ Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin, double
 	this->dmax = 128;
 	this->focal_length = focal_length;
 	this->baseline = baseline;
+	this->cx_d = cx_d;
+	this->cy_d = cy_d;
+	this->doffs = doffs;
 }
 
 /*Naive stereo matching methods*/
@@ -95,6 +99,10 @@ void Naive::NaiveMatching_SAD() {
 	}
 	std::string fileName = "NaiveMatching_SAD.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::cout << "Saving point cloud" << std::endl;
+	std::string cloudFile = "NaiveMatching_SAD";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline, 
+								 this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 /*https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8570471*/
@@ -134,6 +142,9 @@ void Naive::NaiveMatching_ZSAD() {
 	}
 	std::string fileName = "NaiveMatching_ZSAD.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string cloudFile = "NaiveMatching_ZSAD";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 /*Locally scaled square of absolute differences (LSSAD)*/
@@ -178,6 +189,9 @@ void Naive::NaiveMatching_LSSAD() {
 	}
 	std::string fileName = "NaiveMatching_LSSAD.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string cloudFile = "NaiveMatching_LSSAD";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 
@@ -210,6 +224,9 @@ void Naive::NaiveMatching_SSD() {
 	}
 	std::string fileName = "NaiveMatching_SSD.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string cloudFile = "NaiveMatching_SSD";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 
@@ -258,6 +275,9 @@ void Naive::NaiveMatching_NormalisedSSD() {
 	}
 	std::string fileName = "NaiveMatching_NSSD.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string cloudFile = "NaiveMatching_NSSD";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 /*https://core.ac.uk/download/pdf/51249268.pdf*/
@@ -297,6 +317,9 @@ void Naive::NaiveMatching_CrossCorrelation() {
 	}
 	std::string fileName = "NaiveMatching_CC.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string cloudFile = "NaiveMatching_CC";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 void Naive::NaiveMatching_NormalisedCrossCorrelation() {
@@ -342,6 +365,9 @@ void Naive::NaiveMatching_NormalisedCrossCorrelation() {
 	}
 	std::string fileName = "NaiveMatching_NCC.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
+	std::string cloudFile = "NaiveMatching_NCC";
+	utility.Disparity2PointCloud(cloudFile, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 }
 
 void Naive::NaiveMatching_OpenCV() {
@@ -353,6 +379,9 @@ void Naive::NaiveMatching_OpenCV() {
 	sbm->compute(this->img1, this->img2, naive_disparities);
 	std::string fileNameBM = "OpenCV_StereoBM.png";
 	utility.saveDisparityImage(fileNameBM, naive_disparities);
+	std::string cloudFileBM = "OpenCV_StereoBM";
+	utility.Disparity2PointCloud(cloudFileBM, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 	std::cout << "------------StereoBM generated-------------" << std::endl;
 
 	/*StereoBinarySGBM*/
@@ -364,10 +393,13 @@ void Naive::NaiveMatching_OpenCV() {
 	sgbm->compute(this->img1, this->img2, naive_disparities);
 	std::string fileNameSGBM = "OpenCV_StereoSGBM.png";
 	utility.saveDisparityImage(fileNameSGBM, naive_disparities);
+	std::string cloudFileSGBM = "OpenCV_StereoSGBM";
+	utility.Disparity2PointCloud(cloudFileSGBM, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
 	std::cout << "------------StereoSGBM generated-------------" << std::endl;
 
 	/*StereoBinaryHH*/
-	std::cout << "OpenCV StereoHH" << std::endl;
+	std::cout << "-------------OpenCV StereoHH------------------" << std::endl;
 	cv::Ptr<cv::StereoSGBM> hh = cv::StereoSGBM::create(0, this->dmax, this->winSize,
 														 (8 * this->winSize*this->winSize),
 														 (32 * this->winSize*this->winSize),
@@ -375,7 +407,10 @@ void Naive::NaiveMatching_OpenCV() {
 	hh->compute(this->img1, this->img2, naive_disparities);
 	std::string fileNameHH = "OpenCV_StereoHH.png";
 	utility.saveDisparityImage(fileNameHH, naive_disparities);
-	std::cout << "StereoHH generated" << std::endl;
+	std::string cloudFileHH = "OpenCV_StereoSGBM";
+	utility.Disparity2PointCloud(cloudFileHH, naive_disparities, this->winSize, this->dmin, this->baseline,
+		this->focal_length, this->cx_d, this->cy_d, this->doffs);
+	std::cout << "--------------StereoHH generated----------------" << std::endl;
 }
 	
 

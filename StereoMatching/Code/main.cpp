@@ -24,13 +24,16 @@ int main(int argc, char** argv) {
   ////////////////
 
   // camera setup parameters
-  const double focal_length = 1247;
-  const double baseline = 213;
+  const double focal_length = 6338.47;
+  const double baseline = 171.548;
+  const double cx_d = 2928.3;
+  const double cy_d = 940.545;
+  const double doffs = 553.54;
 
   // stereo estimation parameters
-  const int dmin = 67;
+  const int dmin = 128;
   int window_size = 7;
-  double weight = 500;
+  float weight = 500;
   const double scale = 3;
 
   // Commandline arguments 
@@ -70,8 +73,8 @@ int main(int argc, char** argv) {
 
   /*class instantiation*/
   Utility utility;
-  Naive naive(window_size, image1, image2, dmin, focal_length, baseline);
-  Dynamic dynamic(image1, image2, dmin, window_size, weight);
+  Naive naive(window_size, image1, image2, dmin, focal_length, baseline, cx_d, cy_d, doffs);
+  Dynamic dynamic(image1, image2, window_size, weight, dmin, focal_length, baseline, cx_d, cy_d, doffs);
 
   int choice = 1;
 
@@ -89,7 +92,6 @@ int main(int argc, char** argv) {
 	  std::cout << "----------------------------------------------------" << std::endl;
 	
 	  std::stringstream out1;
-	  cv::Mat naive_disparities = cv::Mat::zeros(image1.size().height, image1.size().width, CV_8UC1);
 	  switch (choice) {
 		case 1:
 			/*Naive disparity image	*/	
