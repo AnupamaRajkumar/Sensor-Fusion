@@ -83,8 +83,8 @@ void Naive::NaiveMatching_SAD() {
 			for (int d = -c + this->winSize / 2; d < this->img1.cols - c - this->winSize / 2; ++d) {
 				/*window around the epipolar line for both the images*/
 				int sad = 0;
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						sad += abs((img1.at<uchar>(r + i, c + j) - img2.at<uchar>(r + i, c + j + d)));
 					}
 				}
@@ -122,8 +122,8 @@ void Naive::NaiveMatching_ZSAD() {
 				int sad = 0;
 				int mean1, mean2;
 				mean1 = 0, mean2 = 0;
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						/*calculate mean of each patch for both the images*/
 						mean1 += img1.at<uchar>(r + i, c + j);
 						mean1 /= (this->winSize * this->winSize);
@@ -163,8 +163,8 @@ void Naive::NaiveMatching_LSSAD() {
 				int sad = 0;
 				int mean1, mean2;
 				mean1 = 0, mean2 = 1;
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						/*calculate mean of each patch for both the images*/
 						mean1 += img1.at<uchar>(r + i, c + j);
 						mean1 /= (this->winSize * this->winSize);
@@ -209,8 +209,8 @@ void Naive::NaiveMatching_SSD() {
 			for(int d = -c + this->winSize / 2; d < this->img1.cols - c - this->winSize / 2; ++d){
 				/*window around the epipolar line for both the images*/
 				int ssd = 0;
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						ssd += pow((img1.at<uchar>(r + i, c + j) - img2.at<uchar>(r + i, c + j + d)), 2);
 					}
 				}
@@ -247,8 +247,8 @@ void Naive::NaiveMatching_NormalisedSSD() {
 				int den1, den2, mean1, mean2;
 				int den = 1;
 				den1 = den2 = mean1 = mean2 = 0;
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						/*calculate mean of each patch for both the images*/
 						mean1 += this->img1.at<uchar>(r + i, c + j);
 						mean1 /= (this->winSize * this->winSize);
@@ -297,8 +297,8 @@ void Naive::NaiveMatching_CrossCorrelation() {
 				int cc = 0;
 				int mean1, mean2;
 				mean1 = mean2 = 0;
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						/*calculate mean of each patch for both the images*/
 						mean1 += this->img1.at<uchar>(r + i, c + j);
 						mean1 /= (this->winSize * this->winSize);
@@ -338,8 +338,8 @@ void Naive::NaiveMatching_NormalisedCrossCorrelation() {
 				int ncc, den1, den2, mean1, mean2;
 				ncc = den1 = den2 = mean1 = mean2 = 0;
 				
-				for (int i = -this->winSize / 2; i < this->winSize / 2; i++) {
-					for (int j = -this->winSize / 2; j < this->winSize / 2; j++) {
+				for (int i = -this->winSize / 2; i <= this->winSize / 2; i++) {
+					for (int j = -this->winSize / 2; j <= this->winSize / 2; j++) {
 						/*calculate mean of each patch for both the images*/
 						mean1 += this->img1.at<uchar>(r + i, c + j);
 						mean1 /= (this->winSize * this->winSize);

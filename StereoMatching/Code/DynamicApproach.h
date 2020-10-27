@@ -17,14 +17,11 @@ private:
 	int winSize, dmin;
 	double cx_d, cy_d, doffs, focal_length, baseline;
 	float occlusion;
-	cv::Mat C, M, img1, img2;
+	cv::Mat img1, img2;
 
-	void FindMinimumCostPath(int r);
-	void ReconstructOptimalPath(int r, cv::Mat& naive_disparities);
 	float DisparitySpaceImage(int row, int lr, int rr);
-	//void calculateDynamicStereo();
 	
-	enum MatMat
+	enum MatchParams
 	{
 		Match = 0,				
 		LeftOcc = 1,
