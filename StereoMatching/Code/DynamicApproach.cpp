@@ -24,8 +24,6 @@ Dynamic::Dynamic(cv::Mat& image1, cv::Mat& image2, int window_size, float weight
 void Dynamic::DynamicApproachCalculation() {
 
 	int rowsToProcess = this->img1.rows;
-	int progress = 0;
-	int barWidth = 50;
 	Utility utility;
 	cv::Mat naive_disparities = cv::Mat::zeros(this->img1.size(), CV_8UC1);
 #pragma omp parallel for
@@ -88,22 +86,16 @@ void Dynamic::DynamicApproachCalculation() {
 			naive_disparities.at<uchar>(r - this->winSize / 2, iterator) = (disparity * 255) / this->dmin;
 		}
 
-		std::cout << "[";
-		int pos = barWidth * ((progress) / static_cast<double>(rowsToProcess));
-		for (int i = 0; i < barWidth; ++i) {
-			if (i < pos) std::cout << "=";
-			else if (i == pos) std::cout << ">";
-			else std::cout << " ";
-		}
-		std::cout << "] " << int((progress) / static_cast<double>(rowsToProcess) * 100.0) << " %\r";
-		std::cout.flush();
-		progress++;
+		std::cout
+			<< "Calculating disparities for the dynamic approach... "
+			<< std::ceil(((r - this->winSize/2 + 1) / static_cast<double>(rowsToProcess - this->winSize/2 + 1)) * 100) << "%\r"
+			<< std::flush;
 	}
 	std::string fileName = "DynamicProgrammingEnergyMin.png";
 	utility.saveDisparityImage(fileName, naive_disparities);
 	std::string cloudDP = "DynamicProgrammingEnergyMin";
-	//utility.Disparity2PointCloud(cloudDP, naive_disparities, this->winSize, this->dmin, this->baseline,
-	//							 this->focal_length, this->cx_d, this->cy_d, this->doffs);
+	utility.Disparity2PointCloud(cloudDP, naive_disparities, this->winSize, this->dmin, this->baseline,
+								 this->focal_length, this->cx_d, this->cy_d, this->doffs);
 
 }
 

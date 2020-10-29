@@ -2,7 +2,8 @@
 
 
 void Utility::Disparity2PointCloud(std::string& output_file, cv::Mat& disparities, int& window_size, int& dmin, 
-									double& baseline, double& focal_length, double& cx_d, double& cy_d, double doffs)
+									double& baseline, double& focal_length, double& cx_d, double& cy_d,
+									double doffs)
 {
 	std::stringstream out3d;
 	out3d << output_file << ".xyz";
@@ -17,6 +18,7 @@ void Utility::Disparity2PointCloud(std::string& output_file, cv::Mat& disparitie
 			double Z = pxToMetric.at<float>(x, y);
 			double X = (x - cx_d) * Z / focal_length;
 			double Y = (y - cy_d) * Z / focal_length;
+			//std::cout << X << " " << Y << " " << Z << std::endl;
 			outfile << X << " " << Y << " " << Z << std::endl;
 		}
 	}
@@ -34,9 +36,11 @@ void Utility::ConvertPixelToMetric(cv::Mat& disparities, cv::Mat& pxToMetric, in
 		for (int c = 0; c < disparities.cols; c++) {
 			int disparity = int(disparities.at<uchar>(r, c));
 			if (disparity != 255) {
-				int disp = disparity * (dmin / 255);
+				double disp = disparity * (static_cast<float>(dmin) / 255);
 				double pxDist = (baseline * focal_length) / (disp + doffs);
 				pxToMetric.at<float>(r, c) = pxDist;
+				//std::cout << disparity << " " << disp << " " << pxDist << std::endl;
+				//std::cout << pxToMetric.at<float>(r, c) << std::endl;
 			}
 			else {
 				pxToMetric.at<float>(r, c) = 0.;
