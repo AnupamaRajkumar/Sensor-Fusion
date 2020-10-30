@@ -27,7 +27,7 @@ Naive::Naive(int window_size, cv::Mat& image1, cv::Mat& image2, int dmin,
 	this->doffs = doffs;
 }
 
-/*Naive stereo matching methods*/
+/*Naive stereo matching methods menu*/
 void Naive::NaiveMatchingCalculation() {
 	int choice = 1;
 	std::cout << "Naive stereo matching techniques:" << std::endl;
@@ -290,7 +290,7 @@ void Naive::NaiveMatching_CrossCorrelation() {
 		for (int c = this->winSize / 2; c < this->img1.cols - this->winSize / 2; c++) {
 			/*for each horizontal disparity*/
 			int maxCC = INT_MIN;
-			int disparity = 0.;
+			int disparity = 0;
 
 			for (int d = -c + this->winSize / 2; d < this->img1.cols - c - this->winSize / 2; ++d) {
 				/*window around the epipolar line for both the images*/
@@ -309,9 +309,11 @@ void Naive::NaiveMatching_CrossCorrelation() {
 				}
 				if (cc > maxCC) {
 					maxCC = cc;
+					//std::cout << abs(d) << std::endl;
 					disparity = abs(d);
 				}
 			}
+			//std::cout << "------disparity----:" <<  disparity << std::endl;
 			naive_disparities.at<uchar>(r - this->winSize / 2, c - this->winSize / 2) = (disparity * 255) / dmin;
 		}
 	}

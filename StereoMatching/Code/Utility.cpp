@@ -1,5 +1,6 @@
 #include "Utility.h"
 
+/*Generate Point cloud from disparities*/
 
 void Utility::Disparity2PointCloud(std::string& output_file, cv::Mat& disparities, int& window_size, int& dmin, 
 									double& baseline, double& focal_length, double& cx_d, double& cy_d,
@@ -30,6 +31,7 @@ void Utility::saveDisparityImage(std::string& fileName, cv::Mat& disparity) {
 	cv::imwrite(fileName, disparity);
 }
 
+/*Convert pixel distance in mm metrics*/
 void Utility::ConvertPixelToMetric(cv::Mat& disparities, cv::Mat& pxToMetric, int dmin, 
 								   double baseline, double focal_length, double doffs) {
 	for (int r = 0; r < disparities.rows; r++) {

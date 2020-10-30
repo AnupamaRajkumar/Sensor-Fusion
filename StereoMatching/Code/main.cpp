@@ -24,11 +24,11 @@ int main(int argc, char** argv) {
   ////////////////
 
   // camera setup parameters
-  const double focal_length = 6338.47;
-  const double baseline = 171.548;
-  const double cx_d = 2928.3;
-  const double cy_d = 940.545;
-  const double doffs = 553.54;
+  const double focal_length = 1978.175;
+  const double baseline = 196.054;
+  const double cx_d = 507.445;
+  const double cy_d = 475.135;
+  const double doffs = 57.87;
 
   // stereo estimation parameters
   const int dmin = 128;
