@@ -5,3 +5,4 @@
 5. Disparity map and point cloud generated for each methods
 6. Calibration file added in the Data folder
 7. Other images with corresponding calibration information can be downloaded from Middlebury dataset website (https://vision.middlebury.edu/stereo/data/scenes2014/)
+8. Use of OpenMP for parallelisation
