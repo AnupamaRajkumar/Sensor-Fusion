@@ -1,12 +1,13 @@
 /* EigenExamples.cpp : Some basic examples and trials with Eigen Library
 */
 
-#define _USE_MATH_DEFINES
-#include <iostream>
-#include <Eigen/Dense>
+
+
+#include "SO3.h"
 
 
 
+#if 0 
 int main()
 {
 	using Mat3 = Eigen::Matrix<double, 3, 3>;
@@ -139,4 +140,5 @@ int main()
 
 	return 0;
 }
+#endif
 
