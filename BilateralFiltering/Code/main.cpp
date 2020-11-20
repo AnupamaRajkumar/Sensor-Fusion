@@ -43,9 +43,9 @@ int main(int argc, char** argv ) {
 	imwrite("NoFlash.png", imNoFlash);
 	
 
-	Bilateral bilateral;
+	Bilateral bilateral(im, noiseImg, imFlash, imNoFlash);
 
-	bilateral.BilateralFilteringMenu(noiseImg, imFlash, imNoFlash);
+	bilateral.BilateralFilteringMenu();
 
 	cv::waitKey();
 	return 0;
