@@ -2,5 +2,5 @@
 
 Stereo Matching : Naive and dynamic approach\\
 Filtering : Different conventional - linear and non linear filtering techniques with performance metrics computation\\
-Bilateral Filtering : Implementation - openCV and non-openCV. Joint bilateral filtering
+Bilateral Filtering : Implementation - openCV and non-openCV. Joint bilateral filtering\
 Joint Bilateral Guided Upsampling
