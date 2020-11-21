@@ -1,4 +1,4 @@
-#Task 1 --> Bilateral Filtering
+#Task 1 --> Bilateral Filtering\
 Original Image\
 ![im](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/GuidedImageUpsampling/Input/brucke.jpg)\
 Bilateral Filtering\
