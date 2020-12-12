@@ -7,6 +7,8 @@
 #include <Eigen/Dense>
 #include <nanoflann.hpp>
 #include <fstream>
+#include <omp.h>
+#include <chrono>
 
 using namespace std;
 using namespace cv;
@@ -20,12 +22,17 @@ public:
 private:
 	char* modelPCLFile;
 	char* dataPCLFile;
+	vector<pair<int, size_t>> nearestPts;
+	int maxIterations = 20;
+	double minThreshold = 0.1;
+	double error = 0.0;
+	Mat Rotation, Translation;
 
 	typedef struct Point {
-		double x, y, z;
-		double nx, ny, nz;
+		Point3d dataPt, normalPt;
 	};
 
+	/*point cloud structure as needed by nanoflann*/
 	typedef struct PointCloud
 	{
 		std::vector<Point>  pts;
@@ -38,9 +45,9 @@ private:
 		//  "if/else's" are actually solved at compile time.
 		inline double kdtree_get_pt(const size_t idx, const size_t dim) const
 		{
-			if (dim == 0) return pts[idx].x;
-			else if (dim == 1) return pts[idx].y;
-			else return pts[idx].z;
+			if (dim == 0) return pts[idx].dataPt.x;
+			else if (dim == 1) return pts[idx].dataPt.y;
+			else return pts[idx].dataPt.z;
 		}
 
 		// Optional bounding-box computation: return false to default to a standard bbox computation loop.
@@ -50,13 +57,17 @@ private:
 		bool kdtree_get_bbox(BBOX& /* bb */) const { return false; }
 
 	}allPtCloud;
-
+	/*model and data point cloud variables*/
+	allPtCloud modelPCL, dataPCL;
 	typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, allPtCloud>,
 		allPtCloud, 3> myKDTree;
 
 	void LoadData(allPtCloud& points, char* fileName);
 	void IterativeClosestPoint();
 	size_t FindNearestNeighbor(Point& queryPt, allPtCloud& modelPCL);
+	void CalculateTransformationMatrix();
+	void WriteDataPoints(allPtCloud& points, string fileName);
+	double CalculateDistanceError();
 };
 
 #endif // ! __PCLREGIS__
