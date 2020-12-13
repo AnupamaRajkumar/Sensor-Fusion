@@ -15,6 +15,9 @@ using namespace cv;
 using namespace nanoflann;
 using namespace Eigen;
 
+#define SVD_REGISTRATION 0			/*Only one of these registration techniques */
+#define QUAT_REGISTRATION 1			 /*should be activated at a time*/
+
 class CloudRegistration {
 public:
 	CloudRegistration(char* modelPCLFile, char* dataPCLFile);
@@ -23,7 +26,7 @@ private:
 	char* modelPCLFile;
 	char* dataPCLFile;
 	vector<pair<int, size_t>> nearestPts;
-	int maxIterations = 5;
+	int maxIterations = 20;
 	double minThreshold = 0.1;
 	double error = 0.0;
 	Mat Rotation, Translation;

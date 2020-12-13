@@ -106,6 +106,9 @@ double CloudRegistration::CalculateDistanceError() {
 void CloudRegistration::CalculateTransformationMatrix() {
 	/*step 1 : find center of mass of both the datasets*/
 	Point3d pclCOM, mclCOM;
+	Mat R, T;
+	R = Mat::zeros(3, 3, CV_64F);
+	T = Mat::zeros(3, 1, CV_64F);
 	/*for data point cloud*/
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
 		pclCOM += dataPCL.pts[i].dataPt;
@@ -167,7 +170,10 @@ void CloudRegistration::CalculateTransformationMatrix() {
 		cout << endl;
 	}
 
-	/*eigenvalues and eigenvectors from covariance matrix*/
+#if SVD_REGISTRATION
+
+	/*SVD registrayion method*/
+	/*step 4: eigenvalues and eigenvectors from covariance matrix*/
 	Mat w, u, vt;
 	//SVDecomp(covariance, w, u, vt, 0);
 	SVD::compute(covariance, w, u, vt, 0);
@@ -194,23 +200,16 @@ void CloudRegistration::CalculateTransformationMatrix() {
 	}
 	cout << "determinant of U :" << determinant(u) << endl;
 	cout << "determinant of V' :" << determinant(vt) << endl;
-	Mat R, T;
-	Mat v, ut;
-	R = Mat::zeros(3, 3, CV_64F);
-	T = Mat::zeros(3, 1, CV_64F);
-	/*transpose U and V'*/
-	transpose(u, ut);
-	transpose(vt, v);
-	/*calculate rotation matrix*/
-	R = v * ut;
+
+	/*step 5: calculate rotation matrix*/
+	R = vt.t() * u.t();
 	cout << "determinant of R: " << determinant(R) << endl;
 	if (determinant(R) < 0.) {
 		cout << "Reflection detected..." << endl;
 		vt.at<double>(2, 0) *= -1.;
 		vt.at<double>(2, 1) *= -1.;
 		vt.at<double>(2, 2) *= -1.;
-		transpose(vt, v);
-		R = v * ut;
+		R = vt.t() * u.t();
 	}
 
 	cout << "Rotation matrix calculated" << endl;
@@ -220,6 +219,96 @@ void CloudRegistration::CalculateTransformationMatrix() {
 		}
 		cout << endl;
 	}
+#endif
+
+
+#if QUAT_REGISTRATION
+
+	/*Quaternion registration method - this method is used when SVD leads to reflections instead
+	of rotation which could be due to outliers in the point cloud*/
+	/*step 4a : Find cyclic components of anti-symmetric matrix AntiSymm*/
+	Mat antiSymm = Mat::zeros(3, 3, CV_64F);
+	antiSymm = covariance - covariance.t();
+
+	/*step 4b : Calculate delta vector*/
+	Mat delta = Mat::zeros(3, 1, CV_64F);
+	delta.at<double>(0, 0) = antiSymm.at<double>(1, 2);
+	delta.at<double>(1, 0) = antiSymm.at<double>(2, 0);
+	delta.at<double>(2, 0) = antiSymm.at<double>(0, 1);
+
+	/*step 5 : Form 4x4 symmetric matrix Q*/
+	Mat Q = Mat::zeros(4, 4, CV_64F);
+	Mat temp = Mat::zeros(3, 3, CV_64F);
+	Mat traceEye = temp.clone();
+	for (int r = 0; r < traceEye.rows; r++) {
+		for (int c = 0; c < traceEye.cols; c++) {
+			if (r == c) {
+				traceEye.at<double>(r, c) = covariance.at<double>(r, c);
+			}
+		}
+	}
+	temp = covariance + covariance.t() - traceEye;
+	Q.at<double>(0, 1) = covariance.at<double>(0, 0) + covariance.at<double>(1, 1) + covariance.at<double>(2, 2);
+	Q.at<double>(0, 1) = delta.at<double>(0, 0);
+	Q.at<double>(0, 2) = delta.at<double>(1, 0);
+	Q.at<double>(0, 3) = delta.at<double>(2, 0);
+	Q.at<double>(1, 0) = delta.at<double>(0, 0);
+	Q.at<double>(1, 1) = traceEye.at<double>(0, 0);
+	Q.at<double>(1, 2) = traceEye.at<double>(0, 1);
+	Q.at<double>(1, 3) = traceEye.at<double>(0, 2);
+	Q.at<double>(2, 0) = delta.at<double>(1, 0);
+	Q.at<double>(2, 1) = traceEye.at<double>(1, 0);
+	Q.at<double>(2, 2) = traceEye.at<double>(1, 1);
+	Q.at<double>(2, 3) = traceEye.at<double>(1, 2);
+	Q.at<double>(3, 0) = delta.at<double>(2, 0);
+	Q.at<double>(3, 1) = traceEye.at<double>(2, 0);
+	Q.at<double>(3, 2) = traceEye.at<double>(2, 1);
+	Q.at<double>(3, 3) = traceEye.at<double>(2, 2);
+	cout << "Q matrix:" << endl;
+	for (int r = 0; r < Q.rows; r++) {
+		for (int c = 0; c < Q.cols; c++) {
+			cout << Q.at<double>(r, c) << " ";
+		}
+		cout << endl;
+	}
+	/*step 6 : Find eigenvector for max eigenvalue in Q*/
+	Mat eVals, eVecs;
+	eigen(Q.t() * Q, eVals, eVecs);
+	cout << "Eigen value" << endl;
+	for (int r = 0; r < eVals.rows; r++) {
+		for (int c = 0; c < eVals.cols; c++) {
+			cout << eVals.at<double>(r, c) << " ";
+		}
+		cout << endl;
+	}
+	cout << "Eigen vector" << endl;
+	for (int r = 0; r < eVecs.rows; r++) {
+		for (int c = 0; c < eVecs.cols; c++) {
+			cout << eVecs.at<double>(r, c) << " ";
+		}
+		cout << endl;
+	}
+	/*step 7 : Compute rotation matrix*/
+	/*since eigenvalues are sorted in descending order, the first column on eVecs corresponds to max eVal*/
+	/*qr = [eVecs[0][0], eVecs[0][1], eVecs[0][2], eVecs[0][3]]*/
+	double q0 = eVecs.at<double>(0, 0);
+	double q1 = eVecs.at<double>(0, 1);
+	double q2 = eVecs.at<double>(0, 2);
+	double q3 = eVecs.at<double>(0, 3);
+	R.at<double>(0, 0) = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
+	R.at<double>(0, 1) = 2 * (q1 * q2 - q0 * q3);
+	R.at<double>(0, 2) = 2 * (q1 * q3 + q0 * q2);
+
+	R.at<double>(1, 0) = 2 * (q1 * q2 + q0 * q3);
+	R.at<double>(1, 1) = q0 * q0 + q2 * q2 - q1 * q1 - q3 * q3;
+	R.at<double>(1, 2) = 2 * (q2 * q3 - q0 * q1);
+
+	R.at<double>(2, 0) = 2 * (q1 * q3 - q0 * q2);
+	R.at<double>(2, 1) = 2 * (q2 * q3 + q0 * q1);
+	R.at<double>(2, 2) = q0 * q0 + q3 * q3 - q1 * q1 - q2 * q2;
+
+#endif // QUAT_REGISTRATION
+
 	/*calculate translation matrix*/
 	Mat matPclCOM, matMclCOM;
 	matPclCOM = matMclCOM = T.clone();
