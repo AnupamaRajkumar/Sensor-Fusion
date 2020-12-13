@@ -23,7 +23,7 @@ private:
 	char* modelPCLFile;
 	char* dataPCLFile;
 	vector<pair<int, size_t>> nearestPts;
-	int maxIterations = 15;
+	int maxIterations = 5;
 	double minThreshold = 0.1;
 	double error = 0.0;
 	Mat Rotation, Translation;

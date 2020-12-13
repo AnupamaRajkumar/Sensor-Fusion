@@ -37,7 +37,7 @@ void CloudRegistration::IterativeClosestPoint() {
 		/*step 2 : Data association - for each point in the data set, find the nearest neighbor*/
 #pragma omp parallel for
 		for (int i = 0; i < dataPCL.pts.size(); i++) {
-			if ((nearestPts.size() > 0) && (nearestPts.size() % 1000) == 0)
+			if ((nearestPts.size() > 0) && (nearestPts.size() % 10000) == 0)
 				cout << nearestPts.size() << " neighbors found" << endl;
 
 			size_t nearest = this->FindNearestNeighbor(dataPCL.pts[i], modelPCL);
@@ -88,7 +88,15 @@ void CloudRegistration::IterativeClosestPoint() {
 double CloudRegistration::CalculateDistanceError() {
 	double error = 0;
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
-		error += norm(modelPCL.pts[nearestPts[i].second].dataPt - dataPCL.pts[i].dataPt);
+		Mat dataPt = Mat::zeros(3, 1, CV_64F);
+		Mat modelPt = Mat::zeros(3, 1, CV_64F);
+		dataPt.at<double>(0, 0) = dataPCL.pts[i].dataPt.x;
+		dataPt.at<double>(1, 0) = dataPCL.pts[i].dataPt.y;
+		dataPt.at<double>(2, 0) = dataPCL.pts[i].dataPt.z;
+		modelPt.at<double>(0, 0) = modelPCL.pts[nearestPts[i].second].dataPt.x;
+		modelPt.at<double>(1, 0) = modelPCL.pts[nearestPts[i].second].dataPt.y;
+		modelPt.at<double>(2, 0) = modelPCL.pts[nearestPts[i].second].dataPt.z;
+		error += norm((this->Rotation * dataPt + this->Translation) - modelPt);
 	}
 	error /= dataPCL.pts.size();
 	cout << "error between transformed point and the closest point:" << error << endl;
@@ -161,7 +169,8 @@ void CloudRegistration::CalculateTransformationMatrix() {
 
 	/*eigenvalues and eigenvectors from covariance matrix*/
 	Mat w, u, vt;
-	SVDecomp(covariance, w, u, vt, 0);
+	//SVDecomp(covariance, w, u, vt, 0);
+	SVD::compute(covariance, w, u, vt, 0);
 	cout << "OpenCV Eigen vector U" << endl;
 	for (int r = 0; r < u.rows; r++) {
 		for (int c = 0; c < u.cols; c++) {
@@ -195,6 +204,15 @@ void CloudRegistration::CalculateTransformationMatrix() {
 	/*calculate rotation matrix*/
 	R = v * ut;
 	cout << "determinant of R: " << determinant(R) << endl;
+	if (determinant(R) < 0.) {
+		cout << "Reflection detected..." << endl;
+		vt.at<double>(2, 0) *= -1.;
+		vt.at<double>(2, 1) *= -1.;
+		vt.at<double>(2, 2) *= -1.;
+		transpose(vt, v);
+		R = v * ut;
+	}
+
 	cout << "Rotation matrix calculated" << endl;
 	for (int r = 0; r < R.rows; r++) {
 		for (int c = 0; c < R.cols; c++) {
@@ -202,7 +220,6 @@ void CloudRegistration::CalculateTransformationMatrix() {
 		}
 		cout << endl;
 	}
-
 	/*calculate translation matrix*/
 	Mat matPclCOM, matMclCOM;
 	matPclCOM = matMclCOM = T.clone();
@@ -222,6 +239,7 @@ void CloudRegistration::CalculateTransformationMatrix() {
 		}
 		cout << endl;
 	}
+	
 	this->Rotation = R.clone();
 	this->Translation = T.clone();
 }
