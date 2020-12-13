@@ -194,15 +194,15 @@ void CloudRegistration::CalculateTransformationMatrix() {
 	transpose(vt, v);
 	/*calculate rotation matrix*/
 	R = v * ut;
-	if (determinant(R) == 1.0) {
-		cout << "Rotation matrix calculated" << endl;
-		for (int r = 0; r < R.rows; r++) {
-			for (int c = 0; c < R.cols; c++) {
-				cout << R.at<double>(r, c) << " ";
-			}
-			cout << endl;
+	cout << "determinant of R: " << determinant(R) << endl;
+	cout << "Rotation matrix calculated" << endl;
+	for (int r = 0; r < R.rows; r++) {
+		for (int c = 0; c < R.cols; c++) {
+			cout << R.at<double>(r, c) << " ";
 		}
+		cout << endl;
 	}
+
 	/*calculate translation matrix*/
 	Mat matPclCOM, matMclCOM;
 	matPclCOM = matMclCOM = T.clone();
@@ -294,6 +294,10 @@ void CloudRegistration::WriteDataPoints(allPtCloud& points, string fileName) {
 	ofstream dataFile;
 	dataFile.open(fileName);
 	cout << "Writing into xyz file" << endl;
+	for (int i = 0; i < modelPCL.pts.size(); i++) {
+		dataFile << modelPCL.pts[i].dataPt.x << " " << modelPCL.pts[i].dataPt.y << " " << modelPCL.pts[i].dataPt.z << " " <<
+			modelPCL.pts[i].normalPt.x << " " << modelPCL.pts[i].normalPt.y << " " << modelPCL.pts[i].normalPt.z << " " << endl;
+	}
 	for (int i = 0; i < points.pts.size(); i++) {
 		dataFile << points.pts[i].dataPt.x << " " << points.pts[i].dataPt.y << " " << points.pts[i].dataPt.z << " " <<
 			points.pts[i].normalPt.x << " " << points.pts[i].normalPt.y << " " << points.pts[i].normalPt.z << " " << endl;
