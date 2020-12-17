@@ -2,6 +2,7 @@
 #ifndef  __PCLREGIS__
 #define __PCLREGIS__
 
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
@@ -9,14 +10,15 @@
 #include <fstream>
 #include <omp.h>
 #include <chrono>
+#include <math.h>
 
 using namespace std;
 using namespace cv;
 using namespace nanoflann;
 using namespace Eigen;
 
-#define SVD_REGISTRATION 0			/*Only one of these registration techniques */
-#define QUAT_REGISTRATION 1			 /*should be activated at a time*/
+#define SVD_REGISTRATION 1			 /*Only one of these registration techniques */
+#define QUAT_REGISTRATION 0			 /*should be activated at a time*/
 
 class CloudRegistration {
 public:
@@ -27,7 +29,7 @@ private:
 	char* dataPCLFile;
 	vector<pair<int, size_t>> nearestPts;
 	int maxIterations = 20;
-	double minThreshold = 0.1;
+	double minThreshold = 0.0001;
 	double error = 0.0;
 	Mat Rotation, Translation;
 
@@ -60,10 +62,12 @@ private:
 		bool kdtree_get_bbox(BBOX& /* bb */) const { return false; }
 
 	}allPtCloud;
+
 	/*model and data point cloud variables*/
 	allPtCloud modelPCL, dataPCL;
 	typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, allPtCloud>,
 		allPtCloud, 3> myKDTree;
+	myKDTree *KDTree;
 
 	void LoadData(allPtCloud& points, char* fileName);
 	void IterativeClosestPoint();
@@ -71,6 +75,7 @@ private:
 	void CalculateTransformationMatrix();
 	void WriteDataPoints(allPtCloud& points, string fileName);
 	double CalculateDistanceError();
+	void AddNoiseToData(allPtCloud& dataPCL);
 };
 
 #endif // ! __PCLREGIS__
