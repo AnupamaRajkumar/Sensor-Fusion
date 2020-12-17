@@ -24,7 +24,7 @@ void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 	Mat noiseTranslation = Mat::zeros(3, 1, CV_64F);
 
 	/*add noisy rotation of 30 degs along z axis*/
-	double angle = 90. * (M_PI / 180.);
+	double angle = 45. * (M_PI / 180.);
 	noiseRotation.at<double>(0, 0) = cos(angle);
 	noiseRotation.at<double>(0, 1) = -sin(angle);
 	noiseRotation.at<double>(0, 2) = 0.;
@@ -66,8 +66,8 @@ void CloudRegistration::IterativeClosestPoint() {
 	/*data PCL*/
 	this->LoadData(this->dataPCL, this->dataPCLFile);
 	cout << "Data point cloud loaded, point cloud size:" << this->dataPCL.pts.size() << endl;
-	this->AddNoiseToData(this->dataPCL);
-	cout << "Random noise added to the data point cloud" << endl;
+	//this->AddNoiseToData(this->dataPCL);
+	//cout << "Random noise added to the data point cloud" << endl;
 	int iterations = 1;
 	double oldError = 0.0;
 	while ((iterations <= this->maxIterations)) {			//  && (abs(oldError - this->error) > this->minThreshold)
@@ -75,22 +75,11 @@ void CloudRegistration::IterativeClosestPoint() {
 		cout << "Difference in error: " << (oldError - this->error) << endl;
 		oldError = this->error;
 		/*step 2 : Data association - for each point in the data set, find the nearest neighbor*/
-//#pragma omp parallel for
-		for (int i = 0; i < dataPCL.pts.size(); i++) {
-			//cout << i << endl;
-			if ((nearestPts.size() > 0) && (nearestPts.size() % 1000) == 0)
-				cout << nearestPts.size() << " neighbors found" << endl;
-
-			size_t nearest = this->FindNearestNeighbor(this->dataPCL.pts[i], this->modelPCL);
-			pair<int, size_t> nearComb;
-			nearComb.first = i;
-			nearComb.second = nearest;
-			nearestPts.push_back(nearComb);
-		}
-		cout << "Found nearest points with count:" << nearestPts.size() << endl;
+		this->FindNearestNeighbor();
+		cout << "Found nearest points with count:" << this->nearestPts.size() << endl;
 		/*sort the nearestPts wrt the first index in ascending order because parallel loop
 		can shuffle the indices */
-		sort(nearestPts.begin(), nearestPts.end());
+		sort(this->nearestPts.begin(), this->nearestPts.end());
 		/*step 3 : Data transformation - from R and T matrix to tranform data set close to model set*/
 		this->CalculateTransformationMatrix();
 
@@ -398,24 +387,34 @@ void CloudRegistration::CalculateTransformationMatrix() {
 
 /*Use nanoflann to find nearest neighbor*/
 /* https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_example.cpp */
-size_t CloudRegistration::FindNearestNeighbor(Point& queryPt, allPtCloud& modelPCL) {
-	/*Find minimum distance from points in the model set*/
-	double  query_pt[3] = { queryPt.dataPt.x, queryPt.dataPt.y, queryPt.dataPt.z };
-	size_t ret_index;
-	myKDTree index(3 /*dim*/, modelPCL, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-	index.buildIndex();
-	{
-		// do a knn search
-		const size_t num_results = 1;	
-		double out_dist_sqr;
-		nanoflann::KNNResultSet<double> resultSet(num_results);
-		resultSet.init(&ret_index, &out_dist_sqr);
-		KDTree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+void CloudRegistration::FindNearestNeighbor() {	
 
-		//std::cout << "knnSearch(nn=" << num_results << "): \n";
-		//std::cout << "ret_index=" << ret_index << " out_dist_sqr=" << out_dist_sqr << endl;
+#pragma omp parallel for
+	for (int i = 0; i < dataPCL.pts.size(); i++) {
+			//cout << i << endl;
+			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 10000) == 0)
+				cout << this->nearestPts.size() << " neighbors found" << endl;
+			//Find minimum distance from points in the model set
+			double  query_pt[3] = { dataPCL.pts[i].dataPt.x, dataPCL.pts[i].dataPt.y, dataPCL.pts[i].dataPt.z };
+			myKDTree index(3, modelPCL, KDTreeSingleIndexAdaptorParams(10));
+			index.buildIndex();
+			size_t ret_index;
+			{
+				// do a knn search
+				const size_t num_results = 1;
+				double out_dist_sqr;
+				nanoflann::KNNResultSet<double> resultSet(num_results);
+				resultSet.init(&ret_index, &out_dist_sqr);
+				index.findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+
+				//std::cout << "knnSearch(nn=" << num_results << "): \n";
+				//std::cout << "ret_index=" << ret_index << " out_dist_sqr=" << out_dist_sqr << endl;
+			}
+			pair<int, size_t> nearComb;
+			nearComb.first = i;
+			nearComb.second = ret_index;
+			this->nearestPts.push_back(nearComb);
 	}
-	return ret_index;
 }
 
 void CloudRegistration::LoadData(allPtCloud& points, char* fileName) {

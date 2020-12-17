@@ -28,7 +28,7 @@ private:
 	char* modelPCLFile;
 	char* dataPCLFile;
 	vector<pair<int, size_t>> nearestPts;
-	int maxIterations = 20;
+	int maxIterations = 6;
 	double minThreshold = 0.0001;
 	double error = 0.0;
 	Mat Rotation, Translation;
@@ -67,11 +67,10 @@ private:
 	allPtCloud modelPCL, dataPCL;
 	typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, allPtCloud>,
 		allPtCloud, 3> myKDTree;
-	myKDTree *KDTree;
 
 	void LoadData(allPtCloud& points, char* fileName);
 	void IterativeClosestPoint();
-	size_t FindNearestNeighbor(Point& queryPt, allPtCloud& modelPCL);
+	void FindNearestNeighbor();
 	void CalculateTransformationMatrix();
 	void WriteDataPoints(allPtCloud& points, string fileName);
 	double CalculateDistanceError();
