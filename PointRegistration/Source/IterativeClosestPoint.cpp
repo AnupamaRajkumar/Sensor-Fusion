@@ -18,6 +18,15 @@ CloudRegistration::CloudRegistration(char* modelPCLFile, char* dataPCLFile) {
 	this->IterativeClosestPoint();
 }
 
+CloudRegistration::~CloudRegistration() {
+	this->nearestPts.clear();
+	this->modelPCL.pts.clear();
+	this->dataPCL.pts.clear();
+	this->Rotation.release();
+	this->Translation.release();
+}
+
+#if ADD_NOISE
 void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 {
 	Mat noiseRotation = Mat::zeros(3, 3, CV_64F);
@@ -55,6 +64,8 @@ void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 	this->WriteDataPoints(dataPCL, fileName);
 }
 
+#endif
+
 void CloudRegistration::IterativeClosestPoint() {
 	/*start the timer*/
 	auto start = std::chrono::high_resolution_clock::now();
@@ -66,40 +77,58 @@ void CloudRegistration::IterativeClosestPoint() {
 	/*data PCL*/
 	this->LoadData(this->dataPCL, this->dataPCLFile);
 	cout << "Data point cloud loaded, point cloud size:" << this->dataPCL.pts.size() << endl;
-	//this->AddNoiseToData(this->dataPCL);
-	//cout << "Random noise added to the data point cloud" << endl;
+#if ADD_NOISE
+	this->AddNoiseToData(this->dataPCL);
+	cout << "Random noise added to the data point cloud" << endl;
+#endif
 	int iterations = 1;
 	double oldError = 0.0;
-	while ((iterations <= this->maxIterations)) {			//  && (abs(oldError - this->error) > this->minThreshold)
-		cout << "iteration number: " << iterations << endl;
-		cout << "Difference in error: " << (oldError - this->error) << endl;
-		oldError = this->error;
-		/*step 2 : Data association - for each point in the data set, find the nearest neighbor*/
-		this->FindNearestNeighbor();
-		cout << "Found nearest points with count:" << this->nearestPts.size() << endl;
-		/*sort the nearestPts wrt the first index in ascending order because parallel loop
-		can shuffle the indices */
-		sort(this->nearestPts.begin(), this->nearestPts.end());
-		/*step 3 : Data transformation - from R and T matrix to tranform data set close to model set*/
-		this->CalculateTransformationMatrix();
+	bool step = true;
+	while (step) {
+		if ((iterations <= this->maxIterations) && !(abs(oldError - this->error) < this->minThreshold)) {
+			cout << "iteration number: " << iterations << endl;
+			
+			/*step 2 : Data association - for each point in the data set, find the nearest neighbor*/
+			this->FindNearestNeighbor();
+			cout << "Found nearest points with count:" << this->nearestPts.size() << endl;
+			/*sort the nearestPts wrt the first index in ascending order because parallel loop
+			can shuffle the indices */
+			sort(this->nearestPts.begin(), this->nearestPts.end());
+			/*step 3 : Data transformation - from R and T matrix to tranform data set close to model set*/
+			this->CalculateTransformationMatrix();
 
-		/*apply transformations to the datapoint*/
-		for (int i = 0; i < dataPCL.pts.size(); i++) {
-			Mat dataPt = Mat::zeros(3, 1, CV_64F);
-			dataPt.at<double>(0, 0) = dataPCL.pts[i].dataPt.x;
-			dataPt.at<double>(1, 0) = dataPCL.pts[i].dataPt.y;
-			dataPt.at<double>(2, 0) = dataPCL.pts[i].dataPt.z;
-			dataPt = this->Rotation * dataPt;
-			dataPt += this->Translation;
-			dataPCL.pts[i].dataPt.x = dataPt.at<double>(0, 0);
-			dataPCL.pts[i].dataPt.y = dataPt.at<double>(1, 0);
-			dataPCL.pts[i].dataPt.z = dataPt.at<double>(2, 0);
+			/*apply transformations to the datapoint*/
+			for (int i = 0; i < dataPCL.pts.size(); i++) {
+				Mat dataPt = Mat::zeros(3, 1, CV_64F);
+				dataPt.at<double>(0, 0) = dataPCL.pts[i].dataPt.x;
+				dataPt.at<double>(1, 0) = dataPCL.pts[i].dataPt.y;
+				dataPt.at<double>(2, 0) = dataPCL.pts[i].dataPt.z;
+				dataPt = this->Rotation * dataPt;
+				dataPt += this->Translation;
+				dataPCL.pts[i].dataPt.x = dataPt.at<double>(0, 0);
+				dataPCL.pts[i].dataPt.y = dataPt.at<double>(1, 0);
+				dataPCL.pts[i].dataPt.z = dataPt.at<double>(2, 0);
+			}
+			cout << "Difference in error: " << abs(oldError - this->error) << endl;
+			oldError = this->error;
+			/*calculate the error*/
+			this->error = this->CalculateDistanceError();
+			nearestPts.clear();
+			iterations++;
+			step = true;
 		}
-
-		/*calculate the error*/
-		this->error = this->CalculateDistanceError();
-		nearestPts.clear();
-		iterations++;
+		if (abs(oldError - this->error) <= this->minThreshold) {
+			cout << "*********************************************************\n";
+			cout << "Converged with error:" << abs(oldError - this->error) << endl;
+			step = false;
+			break;
+		}
+		if (iterations > this->maxIterations) {
+			cout << "*********************************************************\n";
+			cout << "Max iterations over, not converged" << endl;
+			step = false;
+			break;
+		}
 	}
 	/*end the timer*/
 	auto finish = std::chrono::high_resolution_clock::now();
@@ -202,44 +231,12 @@ void CloudRegistration::CalculateTransformationMatrix() {
 	covariance.at<double>(2, 1) = sumZY / vectorSize;
 	covariance.at<double>(2, 2) = sumZZ / vectorSize;
 
-	cout << "Covariance matrix" << endl;
-	for (int r = 0; r < 3; r++) {
-		for (int c = 0; c < 3; c++) {
-			cout << covariance.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
-
 #if SVD_REGISTRATION
 
 	/*SVD registrayion method*/
 	/*step 4: eigenvalues and eigenvectors from covariance matrix*/
 	Mat w, u, vt;
-	//SVDecomp(covariance, w, u, vt, 0);
 	SVD::compute(covariance, w, u, vt, 0);
-	cout << "OpenCV Eigen vector U" << endl;
-	for (int r = 0; r < u.rows; r++) {
-		for (int c = 0; c < u.cols; c++) {
-			cout << u.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
-	cout << "OpenCV Eigen vector V'" << endl;
-	for (int r = 0; r < vt.rows; r++) {
-		for (int c = 0; c < vt.cols; c++) {
-			cout << vt.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
-	cout << "OpenCV Eigen vector W" << endl;
-	for (int r = 0; r < w.rows; r++) {
-		for (int c = 0; c < w.cols; c++) {
-			cout << w.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
-	cout << "determinant of U :" << determinant(u) << endl;
-	cout << "determinant of V' :" << determinant(vt) << endl;
 
 	/*step 5: calculate rotation matrix*/
 	R = vt.t() * u.t();
@@ -389,10 +386,10 @@ void CloudRegistration::CalculateTransformationMatrix() {
 /* https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_example.cpp */
 void CloudRegistration::FindNearestNeighbor() {	
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
 			//cout << i << endl;
-			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 10000) == 0)
+			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 1000) == 0)
 				cout << this->nearestPts.size() << " neighbors found" << endl;
 			//Find minimum distance from points in the model set
 			double  query_pt[3] = { dataPCL.pts[i].dataPt.x, dataPCL.pts[i].dataPt.y, dataPCL.pts[i].dataPt.z };

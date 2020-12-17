@@ -17,20 +17,21 @@ using namespace cv;
 using namespace nanoflann;
 using namespace Eigen;
 
-#define SVD_REGISTRATION 1			 /*Only one of these registration techniques */
-#define QUAT_REGISTRATION 0			 /*should be activated at a time*/
-
+#define SVD_REGISTRATION	1			 /*Only one of these registration techniques */
+#define QUAT_REGISTRATION	0			 /*should be activated at a time*/
+#define ADD_NOISE			1			 /*if noise in the form of random rotations etc is to be added*/
 class CloudRegistration {
 public:
 	CloudRegistration(char* modelPCLFile, char* dataPCLFile);
+	~CloudRegistration();
 
 private:
 	char* modelPCLFile;
 	char* dataPCLFile;
 	vector<pair<int, size_t>> nearestPts;
-	int maxIterations = 6;
-	double minThreshold = 0.0001;
-	double error = 0.0;
+	int maxIterations = 15;
+	double minThreshold = 0.002;
+	double error = std::numeric_limits<double>::max();
 	Mat Rotation, Translation;
 
 	typedef struct Point {
