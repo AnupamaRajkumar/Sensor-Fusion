@@ -3,7 +3,7 @@ Model Set - Fountain\
 ![ModelSetFountain](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/ModelSet_Fountain.png)
 
 Data Set - Fountain\
-[!DataSetFountain](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/DataSet_Fountain.png)
+[](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/DataSet_Fountain.png)
 
 Point cloud - Cow\
 ![PointCloudCow](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/ModelSet_Fountain.png)
