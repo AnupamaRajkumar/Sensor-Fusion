@@ -28,6 +28,26 @@ Registered point cloud using TrICP for cow point cloud\
 
 ## Performance Comparison - ICP and TrICP ##
 
+For rotation angle of 30 degrees, comparison between ICP and TrICP is as follows:
+|    Parameter  |      ICP      |  TrICP  |
+| ------------- |:-------------:| -------:|
+| Mean sq error | 0.0000813     | 0.00009 |
+| time for convergence     | 0.111016 min      |  0.10811 min   |
+
+| |
+|:-------------------------:|:-------------------------:|
+|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_30degs00.png">  spat:1, rad:7 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_30deg00.png">  spat:1, rad:14 |
+
+For rotation angle of 20 degrees, comparison between ICP and TrICP is as follows:
+|    Parameter  |      ICP      |  TrICP  |
+| ------------- |:-------------:| -------:|
+| Mean sq error | 0.00006287     | 0.00007299 |
+| time for convergence     | 0.06355 min      |  0.060677 min   |
+
+| |
+|:-------------------------:|:-------------------------:|
+|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_20degs00.png">  spat:1, rad:7 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_20deg00.png">  spat:1, rad:14 |
+
 
 
 
