@@ -6,9 +6,9 @@ Model Set - Fountain\
 Data Set - Fountain\
 ![DSFntn](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/DataSet_Fountain.png)\
 Point cloud - Cow\
-![PointCloudCow](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/ModelSet_Fountain.png)\
+![PointCloudCow](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/CowDataSet00.png)\
 Point cloud - Cow and noise added to it to rotate the point cloud by 30 degrees\
-![PointCloudNoisyCow](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/ModelSet_Fountain.png)
+![PointCloudNoisyCow](https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/CowNoisy00.png)
 
 ## Iterative Closest Point (ICP) Algorithm for 3D point registration ##
 Registered point set using ICP for fountain point cloud\
@@ -46,7 +46,7 @@ For rotation angle of 20 degrees, comparison between ICP and TrICP is as follows
 
 | | |
 |:-------------------------:|:-------------------------:|
-|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_20degs00.png">  ICP, rot angle : 20 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_20deg00.png">  TrICP, rot angle : 20 |
+|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_20degs00.png">  ICP, rot angle : 20 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_20degs00.png">  TrICP, rot angle : 20 |
 
 
 
