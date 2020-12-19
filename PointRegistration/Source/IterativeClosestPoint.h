@@ -20,17 +20,26 @@ using namespace Eigen;
 #define SVD_REGISTRATION	1			 /*Only one of these registration techniques */
 #define QUAT_REGISTRATION	0			 /*should be activated at a time*/
 #define ADD_NOISE			1			 /*if noise in the form of random rotations etc is to be added*/
+
 class CloudRegistration {
 public:
 	CloudRegistration(char* modelPCLFile, char* dataPCLFile);
 	~CloudRegistration();
 
 private:
+
+	/***************************VARIABLES***********************************************/
 	char* modelPCLFile;
 	char* dataPCLFile;
-	vector<pair<int, size_t>> nearestPts;
+	vector<pair<uint, size_t>> nearestPts;
+	vector<pair<double, uint16_t>> squareDist;
+	vector<pair<double, uint16_t>> trimmedPts;
+
 	int maxIterations = 15;
 	double minThreshold = 0.002;
+	double minTrimmedThreshold = 0.003;
+	double minTrimmedError = 0.1;
+	double overlapParameter = 0.5;
 	double error = std::numeric_limits<double>::max();
 	Mat Rotation, Translation;
 
@@ -65,14 +74,21 @@ private:
 	}allPtCloud;
 
 	/*model and data point cloud variables*/
-	allPtCloud modelPCL, dataPCL;
+	allPtCloud modelPCL, dataPCL, trimmedDataPCL;
 	typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, allPtCloud>,
 		allPtCloud, 3> myKDTree;
 
+	/******************************************FUNCTIONS************************************/
 	void LoadData(allPtCloud& points, char* fileName);
+	void PreProcessingSteps();
 	void IterativeClosestPoint();
+	void TrimmedICP();
+	void CalculateOverlapParameter();
+	double CalculateTrimmedMSE(double overlap);
 	void FindNearestNeighbor();
-	void CalculateTransformationMatrix();
+	void CalculateTransformationMatrix(bool isICP); /*true for ICP, false for TrICP */
+	Mat CalcualateTrICPCovarianceMtx(int length, vector<Point3d>& centerPCL, vector<Point3d>& centerMCL);
+	Mat CalcualateICPCovarianceMtx(int length, vector<Point3d>& centerPCL, vector<Point3d>& centerMCL);
 	void WriteDataPoints(allPtCloud& points, string fileName);
 	double CalculateDistanceError();
 	void AddNoiseToData(allPtCloud& dataPCL);

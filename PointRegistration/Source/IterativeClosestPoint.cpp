@@ -1,25 +1,20 @@
 
-/*Iterative closest point:
-1. Find closest point in the model set such that |M - S| = min using kd-tree
-2. Find R and T at this point using SVD such that |R*S + T - M| is minimised
-3. Rotate and translate the dataset point cloud
-4. Calculate the error ie the distance between the transformed points with the model set
-- if the error is less than a threshold, exit
-- else continue the above steps until the error is less than the threshold
-*/
-
 #include "IterativeClosestPoint.h"
 
 
 CloudRegistration::CloudRegistration(char* modelPCLFile, char* dataPCLFile) {
 	this->modelPCLFile = modelPCLFile;
 	this->dataPCLFile = dataPCLFile;
+	/*Perform initial steps, like data loading etc*/
+	this->PreProcessingSteps();
 	/*Perform point cloud registration*/
-	this->IterativeClosestPoint();
+	//this->IterativeClosestPoint();
+	this->TrimmedICP();
 }
 
 CloudRegistration::~CloudRegistration() {
 	this->nearestPts.clear();
+	this->squareDist.clear();
 	this->modelPCL.pts.clear();
 	this->dataPCL.pts.clear();
 	this->Rotation.release();
@@ -32,8 +27,8 @@ void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 	Mat noiseRotation = Mat::zeros(3, 3, CV_64F);
 	Mat noiseTranslation = Mat::zeros(3, 1, CV_64F);
 
-	/*add noisy rotation of 30 degs along z axis*/
-	double angle = 45. * (M_PI / 180.);
+	/*add noisy rotation of some degs along z axis*/
+	double angle = 20. * (M_PI / 180.);
 	noiseRotation.at<double>(0, 0) = cos(angle);
 	noiseRotation.at<double>(0, 1) = -sin(angle);
 	noiseRotation.at<double>(0, 2) = 0.;
@@ -45,8 +40,8 @@ void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 	noiseRotation.at<double>(2, 2) = 1.0;
 
 	/*add random translation*/
-	noiseTranslation.at<double>(0, 0) = 0.5;
-	noiseTranslation.at<double>(0, 0) = 0.5;
+	noiseTranslation.at<double>(0, 0) = 0.;
+	noiseTranslation.at<double>(0, 0) = 0.;
 	noiseTranslation.at<double>(0, 0) = 1.;
 	/*apply randomtransformations to the datapoint*/
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
@@ -66,10 +61,8 @@ void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 
 #endif
 
-void CloudRegistration::IterativeClosestPoint() {
-	/*start the timer*/
-	auto start = std::chrono::high_resolution_clock::now();
-	/*step 1 : load model and data point clouds*/
+void CloudRegistration::PreProcessingSteps() {
+	/*load model and data point clouds*/
 	cout << "Loading point clouds" << endl;
 	/*model PCL*/
 	this->LoadData(this->modelPCL, this->modelPCLFile);
@@ -78,16 +71,29 @@ void CloudRegistration::IterativeClosestPoint() {
 	this->LoadData(this->dataPCL, this->dataPCLFile);
 	cout << "Data point cloud loaded, point cloud size:" << this->dataPCL.pts.size() << endl;
 #if ADD_NOISE
-	this->AddNoiseToData(this->dataPCL);
+	/*Add noise to the point cloud by adding some random rotaton and translation*/
 	cout << "Random noise added to the data point cloud" << endl;
+	this->AddNoiseToData(this->dataPCL);
 #endif
+}
+
+/*Iterative closest point:
+1. Find closest point in the model set such that |M - S| = min using kd-tree
+2. Find R and T at this point using SVD such that |R*S + T - M| is minimised
+3. Rotate and translate the dataset point cloud
+4. Calculate the error ie the distance between the transformed points with the model set
+- if the error is less than a threshold, exit
+- else continue the above steps until the error is less than the threshold
+*/
+void CloudRegistration::IterativeClosestPoint() {
+	/*start the timer*/
+	auto start = std::chrono::high_resolution_clock::now();
 	int iterations = 1;
 	double oldError = 0.0;
 	bool step = true;
 	while (step) {
 		if ((iterations <= this->maxIterations) && !(abs(oldError - this->error) < this->minThreshold)) {
 			cout << "iteration number: " << iterations << endl;
-			
 			/*step 2 : Data association - for each point in the data set, find the nearest neighbor*/
 			this->FindNearestNeighbor();
 			cout << "Found nearest points with count:" << this->nearestPts.size() << endl;
@@ -95,7 +101,7 @@ void CloudRegistration::IterativeClosestPoint() {
 			can shuffle the indices */
 			sort(this->nearestPts.begin(), this->nearestPts.end());
 			/*step 3 : Data transformation - from R and T matrix to tranform data set close to model set*/
-			this->CalculateTransformationMatrix();
+			this->CalculateTransformationMatrix(true);
 
 			/*apply transformations to the datapoint*/
 			for (int i = 0; i < dataPCL.pts.size(); i++) {
@@ -137,20 +143,9 @@ void CloudRegistration::IterativeClosestPoint() {
 	cout << "Time taken = " << elapsed.count()/60. << " minutes" << endl;
 	/*save the point cloud*/
 	cout << "Saving the registered point cloud....." << endl;
-	string fileName = "RegisteredData.xyz";
+	string fileName = "RegisteredDataICP.xyz";
 	this->WriteDataPoints(dataPCL, fileName);
 }
-
-
-
-/************************************************************
-Trimmed iterative closest point (TrICP)
-1. Find closest point in the model set such that  |M - S| = min using kd-tree
-2. Trimmed squares : sort the distances, select Npo least values and calculate their sum
-3. Convergence test : Repeat until any of the stopping conditions is satisfied
-4. Motion calculation : Compute optimal motion (R, t) that minimises Sts
-5. Data set motion
-**************************************************************/
 
 
 /*calculate the euclideam difference between the transformed matrix and the */
@@ -172,7 +167,36 @@ double CloudRegistration::CalculateDistanceError() {
 	return error;
 }
 
-void CloudRegistration::CalculateTransformationMatrix() {
+Mat CloudRegistration::CalcualateICPCovarianceMtx(int length, vector<Point3d>& centerPCL, vector<Point3d>& centerMCL) {
+	Mat covariance = Mat::zeros(3, 3, CV_64F);
+	double sumXX = 0., sumXY = 0., sumXZ = 0.;
+	double sumYX = 0., sumYY = 0., sumYZ = 0.;
+	double sumZX = 0., sumZY = 0., sumZZ = 0.;
+	for (int i = 0; i < length; i++) {
+		sumXX += centerPCL[i].x * centerMCL[nearestPts[i].second].x;
+		sumXY += centerPCL[i].x * centerMCL[nearestPts[i].second].y;
+		sumXZ += centerPCL[i].x * centerMCL[nearestPts[i].second].z;
+		sumYX += centerPCL[i].y * centerMCL[nearestPts[i].second].x;
+		sumYY += centerPCL[i].y * centerMCL[nearestPts[i].second].y;
+		sumYZ += centerPCL[i].y * centerMCL[nearestPts[i].second].z;
+		sumZX += centerPCL[i].z * centerMCL[nearestPts[i].second].x;
+		sumZY += centerPCL[i].z * centerMCL[nearestPts[i].second].y;
+		sumZZ += centerPCL[i].z * centerMCL[nearestPts[i].second].z;
+	}
+	covariance.at<double>(0, 0) = sumXX / length;
+	covariance.at<double>(0, 1) = sumXY / length;
+	covariance.at<double>(0, 2) = sumXZ / length;
+	covariance.at<double>(1, 0) = sumYX / length;
+	covariance.at<double>(1, 1) = sumYY / length;
+	covariance.at<double>(1, 2) = sumYZ / length;
+	covariance.at<double>(2, 0) = sumZX / length;
+	covariance.at<double>(2, 1) = sumZY / length;
+	covariance.at<double>(2, 2) = sumZZ / length;
+
+	return covariance;
+}
+
+void CloudRegistration::CalculateTransformationMatrix(bool isICP) {
 	/*step 1 : find center of mass of both the datasets*/
 	Point3d pclCOM, mclCOM;
 	Mat R, T;
@@ -191,45 +215,41 @@ void CloudRegistration::CalculateTransformationMatrix() {
 	cout << "pclCOM: " << pclCOM << " mclCOM: " << mclCOM << endl;
 	/*step 2 : center the point cloud as per the center of mass calculated*/
 	vector<Point3d> centerPCL, centerMCL;
-	/*for data point cloud*/
-	for (int i = 0; i < dataPCL.pts.size(); i++) {
-		Point3d pt;
-		pt = dataPCL.pts[i].dataPt - pclCOM;
-		centerPCL.emplace_back(pt);
-	}
-	/*for nearest model point cloud*/
-	for (int i = 0; i < modelPCL.pts.size(); i++) {
-		Point3d pt;
-		pt = modelPCL.pts[i].dataPt - mclCOM;				//nearestPts[i].second
-		centerMCL.emplace_back(pt);
-	}
-
 	/*step 3 : calculate covariance matrix*/
-	double vectorSize = nearestPts.size();
-	Mat covariance = Mat::zeros(3, 3, CV_64F);
-	double sumXX = 0., sumXY = 0., sumXZ = 0.;
-	double sumYX = 0., sumYY = 0., sumYZ = 0.;
-	double sumZX = 0., sumZY = 0., sumZZ = 0.;
-	for (int i = 0; i < vectorSize; i++) {
-		sumXX += centerPCL[i].x * centerMCL[nearestPts[i].second].x;
-		sumXY += centerPCL[i].x * centerMCL[nearestPts[i].second].y;
-		sumXZ += centerPCL[i].x * centerMCL[nearestPts[i].second].z;
-		sumYX += centerPCL[i].y * centerMCL[nearestPts[i].second].x;
-		sumYY += centerPCL[i].y * centerMCL[nearestPts[i].second].y;
-		sumYZ += centerPCL[i].y * centerMCL[nearestPts[i].second].z;
-		sumZX += centerPCL[i].z * centerMCL[nearestPts[i].second].x;
-		sumZY += centerPCL[i].z * centerMCL[nearestPts[i].second].y;
-		sumZZ += centerPCL[i].z * centerMCL[nearestPts[i].second].z;
+	int vectorSize = 0;
+	Mat covariance;
+	if (isICP) {
+		/*for data point cloud*/
+		for (int i = 0; i < dataPCL.pts.size(); i++) {
+			Point3d pt;
+			pt = dataPCL.pts[i].dataPt - pclCOM;
+			centerPCL.emplace_back(pt);
+		}
+		/*for nearest model point cloud*/
+		for (int i = 0; i < modelPCL.pts.size(); i++) {
+			Point3d pt;
+			pt = modelPCL.pts[i].dataPt - mclCOM;
+			centerMCL.emplace_back(pt);
+		}
+		vectorSize = nearestPts.size();
+		covariance = this->CalcualateICPCovarianceMtx(vectorSize, centerPCL, centerMCL);
 	}
-	covariance.at<double>(0, 0) = sumXX / vectorSize;
-	covariance.at<double>(0, 1) = sumXY / vectorSize;
-	covariance.at<double>(0, 2) = sumXZ / vectorSize;
-	covariance.at<double>(1, 0) = sumYX / vectorSize;
-	covariance.at<double>(1, 1) = sumYY / vectorSize;
-	covariance.at<double>(1, 2) = sumYZ / vectorSize;
-	covariance.at<double>(2, 0) = sumZX / vectorSize;
-	covariance.at<double>(2, 1) = sumZY / vectorSize;
-	covariance.at<double>(2, 2) = sumZZ / vectorSize;
+	else {
+		/*for trimmed data point cloud*/
+		for (int i = 0; i < this->squareDist.size(); i++) {
+			Point3d pt;
+			pt = dataPCL.pts[trimmedPts[i].second].dataPt - pclCOM;
+			centerPCL.emplace_back(pt);
+		}
+		/*for trimmed model point cloud*/
+		for (int i = 0; i < this->squareDist.size(); i++) {
+			Point3d pt;
+			pt = modelPCL.pts[squareDist[i].second].dataPt - mclCOM;
+			centerMCL.emplace_back(pt);
+		}
+		vectorSize = squareDist.size();
+		covariance = this->CalcualateTrICPCovarianceMtx(vectorSize, centerPCL, centerMCL);
+	}
 
 #if SVD_REGISTRATION
 
@@ -285,12 +305,6 @@ void CloudRegistration::CalculateTransformationMatrix() {
 			}
 		}
 	}
-	for (int r = 0; r < traceEye.rows; r++) {
-		for (int c = 0; c < traceEye.cols; c++) {
-			cout << traceEye.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
 	temp = covariance + covariance.t() - traceEye;
 	Q.at<double>(0, 0) = covTrace;
 	Q.at<double>(0, 1) = delta.at<double>(0, 0);
@@ -315,20 +329,7 @@ void CloudRegistration::CalculateTransformationMatrix() {
 	/*step 6 : Find eigenvector for max eigenvalue in Q*/
 	Mat eVals, eVecs;
 	eigen(Q, eVals, eVecs);
-	cout << "Eigen value" << endl;
-	for (int r = 0; r < eVals.rows; r++) {
-		for (int c = 0; c < eVals.cols; c++) {
-			cout << eVals.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
-	cout << "Eigen vector" << endl;
-	for (int r = 0; r < eVecs.rows; r++) {
-		for (int c = 0; c < eVecs.cols; c++) {
-			cout << eVecs.at<double>(r, c) << " ";
-		}
-		cout << endl;
-	}
+
 	/*step 7 : Compute rotation matrix*/
 	/*since eigenvalues are sorted in descending order, the first column on eVecs corresponds to max eVal*/
 	/*qr = [eVecs[0][0], eVecs[1][0], eVecs[2][0], eVecs[3][0]]*/
@@ -386,9 +387,12 @@ void CloudRegistration::CalculateTransformationMatrix() {
 /* https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_example.cpp */
 void CloudRegistration::FindNearestNeighbor() {	
 
+	this->nearestPts.clear();
+	this->squareDist.clear();
+	this->trimmedPts.clear();
 //#pragma omp parallel for
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
-			//cout << i << endl;
+			//cout << i << " ";
 			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 1000) == 0)
 				cout << this->nearestPts.size() << " neighbors found" << endl;
 			//Find minimum distance from points in the model set
@@ -396,21 +400,32 @@ void CloudRegistration::FindNearestNeighbor() {
 			myKDTree index(3, modelPCL, KDTreeSingleIndexAdaptorParams(10));
 			index.buildIndex();
 			size_t ret_index;
+			double out_dist_sqr;
 			{
 				// do a knn search
 				const size_t num_results = 1;
-				double out_dist_sqr;
 				nanoflann::KNNResultSet<double> resultSet(num_results);
 				resultSet.init(&ret_index, &out_dist_sqr);
 				index.findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
 
 				//std::cout << "knnSearch(nn=" << num_results << "): \n";
-				//std::cout << "ret_index=" << ret_index << " out_dist_sqr=" << out_dist_sqr << endl;
+				//std::cout << "i="  << i <<  " ret_index=" << ret_index << " out_dist_sqr=" << out_dist_sqr << endl;
 			}
-			pair<int, size_t> nearComb;
+			pair<uint16_t, size_t> nearComb;
+			pair<double, uint16_t> sqDist, trim;
 			nearComb.first = i;
 			nearComb.second = ret_index;
+
+			sqDist.first = out_dist_sqr;
+			sqDist.second = ret_index;
+			trim.first = out_dist_sqr;
+			trim.second = i;
+			
+			/*nearest points needed for ICP*/
 			this->nearestPts.push_back(nearComb);
+			/*square distances needed for TrICP*/
+			this->squareDist.push_back(sqDist);
+			this->trimmedPts.push_back(trim);
 	}
 }
 
