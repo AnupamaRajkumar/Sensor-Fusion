@@ -48,6 +48,7 @@ For rotation angle of 20 degrees, comparison between ICP and TrICP is as follows
 |:-------------------------:|:-------------------------:|
 |<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_20degs00.png">  ICP, rot angle : 20 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_20degs00.png">  TrICP, rot angle : 20 |
 
+As can be seen from the results, for a small dataset of 1177 points, TrICP is faster than ICP and produces better result for rotation angles < 30 degrees
 
 
 
