@@ -19,7 +19,7 @@ using namespace Eigen;
 
 #define SVD_REGISTRATION	1			 /*Only one of these registration techniques */
 #define QUAT_REGISTRATION	0			 /*should be activated at a time*/
-#define ADD_NOISE			1			 /*if noise in the form of random rotations etc is to be added*/
+#define ADD_NOISE			0			 /*if noise in the form of random rotations etc is to be added*/
 
 class CloudRegistration {
 public:
@@ -35,9 +35,9 @@ private:
 	vector<pair<double, uint16_t>> squareDist;
 	vector<pair<double, uint16_t>> trimmedPts;
 
-	int maxIterations = 15;
-	double minThreshold = 0.002;
-	double minTrimmedThreshold = 0.003;
+	int maxIterations = 40;
+	double minThreshold = 0.001;
+	double minTrimmedThreshold = 0.0001;
 	double minTrimmedError = 0.1;
 	double overlapParameter = 0.5;
 	double error = std::numeric_limits<double>::max();
@@ -80,6 +80,7 @@ private:
 
 	/******************************************FUNCTIONS************************************/
 	void LoadData(allPtCloud& points, char* fileName);
+	void PointRegistrationMenu();
 	void PreProcessingSteps();
 	void IterativeClosestPoint();
 	void TrimmedICP();

@@ -121,7 +121,7 @@ void CloudRegistration::CalculateOverlapParameter() {
 	double lambda = 2.0;
 	double objectiveFun = 0., objectiveFunNext = 0., objectiveFunPrev = 0.;
 	bool overlapParamFound = false;
-	double overlapIt = 0.05;
+	double overlapIt = 0.01;
 	int count = 1;
 	while (minOverlap <= 1.0 && !overlapParamFound) {
 		//cout << "Iteration number : " << count << endl;

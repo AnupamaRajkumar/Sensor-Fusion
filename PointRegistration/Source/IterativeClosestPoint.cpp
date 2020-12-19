@@ -8,8 +8,7 @@ CloudRegistration::CloudRegistration(char* modelPCLFile, char* dataPCLFile) {
 	/*Perform initial steps, like data loading etc*/
 	this->PreProcessingSteps();
 	/*Perform point cloud registration*/
-	//this->IterativeClosestPoint();
-	this->TrimmedICP();
+	this->PointRegistrationMenu();
 }
 
 CloudRegistration::~CloudRegistration() {
@@ -19,6 +18,26 @@ CloudRegistration::~CloudRegistration() {
 	this->dataPCL.pts.clear();
 	this->Rotation.release();
 	this->Translation.release();
+}
+
+void CloudRegistration::PointRegistrationMenu() {
+	int choice = 1;
+	cout << "Point Registration Menu" << endl;
+	cout << "1. Iterarative Closest Point" << endl;
+	cout << "2. Trimmed Iterative Closest Point" << endl;
+	cout << "Enter choice (1/2)" << endl;
+	cin >> choice;
+	switch (choice)
+	{
+	case 1:
+		this->IterativeClosestPoint();
+		break;
+	case 2:
+		this->TrimmedICP();
+		break;
+	default:
+		break;
+	}
 }
 
 #if ADD_NOISE
@@ -197,28 +216,27 @@ Mat CloudRegistration::CalcualateICPCovarianceMtx(int length, vector<Point3d>& c
 }
 
 void CloudRegistration::CalculateTransformationMatrix(bool isICP) {
-	/*step 1 : find center of mass of both the datasets*/
 	Point3d pclCOM, mclCOM;
 	Mat R, T;
 	R = Mat::zeros(3, 3, CV_64F);
 	T = Mat::zeros(3, 1, CV_64F);
-	/*for data point cloud*/
-	for (int i = 0; i < dataPCL.pts.size(); i++) {
-		pclCOM += dataPCL.pts[i].dataPt;
-	}
-	pclCOM = pclCOM * (1.0 / dataPCL.pts.size());
-	/*for nearest model point clouds*/
-	for (int i = 0; i < modelPCL.pts.size(); i++) {
-		mclCOM += modelPCL.pts[i].dataPt;
-	}
-	mclCOM = mclCOM * (1.0 / modelPCL.pts.size());
-	cout << "pclCOM: " << pclCOM << " mclCOM: " << mclCOM << endl;
-	/*step 2 : center the point cloud as per the center of mass calculated*/
 	vector<Point3d> centerPCL, centerMCL;
-	/*step 3 : calculate covariance matrix*/
 	int vectorSize = 0;
 	Mat covariance;
 	if (isICP) {
+		/*step 1 : find center of mass of both the datasets*/
+		/*for data point cloud*/
+		for (int i = 0; i < dataPCL.pts.size(); i++) {
+			pclCOM += dataPCL.pts[i].dataPt;
+		}
+		pclCOM = pclCOM * (1.0 / dataPCL.pts.size());
+		/*for nearest model point clouds*/
+		for (int i = 0; i < modelPCL.pts.size(); i++) {
+			mclCOM += modelPCL.pts[i].dataPt;
+		}
+		mclCOM = mclCOM * (1.0 / modelPCL.pts.size());
+		cout << "pclCOM: " << pclCOM << " mclCOM: " << mclCOM << endl;
+		/*step 2 : center the point cloud as per the center of mass calculated*/
 		/*for data point cloud*/
 		for (int i = 0; i < dataPCL.pts.size(); i++) {
 			Point3d pt;
@@ -231,10 +249,24 @@ void CloudRegistration::CalculateTransformationMatrix(bool isICP) {
 			pt = modelPCL.pts[i].dataPt - mclCOM;
 			centerMCL.emplace_back(pt);
 		}
+		/*step 3 : calculate covariance matrix*/
 		vectorSize = nearestPts.size();
 		covariance = this->CalcualateICPCovarianceMtx(vectorSize, centerPCL, centerMCL);
 	}
 	else {
+		/*step 1 : find center of mass of both the datasets*/
+		/*for data point cloud*/
+		for (int i = 0; i < squareDist.size(); i++) {
+			pclCOM += dataPCL.pts[trimmedPts[i].second].dataPt;
+		}
+		pclCOM = pclCOM * (1.0 / dataPCL.pts.size());
+		/*for nearest model point clouds*/
+		for (int i = 0; i < squareDist.size(); i++) {
+			mclCOM += modelPCL.pts[squareDist[i].second].dataPt;
+		}
+		mclCOM = mclCOM * (1.0 / modelPCL.pts.size());
+		cout << "pclCOM: " << pclCOM << " mclCOM: " << mclCOM << endl;
+		/*step 2 : center the point cloud as per the center of mass calculated*/
 		/*for trimmed data point cloud*/
 		for (int i = 0; i < this->squareDist.size(); i++) {
 			Point3d pt;
@@ -247,6 +279,7 @@ void CloudRegistration::CalculateTransformationMatrix(bool isICP) {
 			pt = modelPCL.pts[squareDist[i].second].dataPt - mclCOM;
 			centerMCL.emplace_back(pt);
 		}
+		/*step 3 : calculate covariance matrix*/
 		vectorSize = squareDist.size();
 		covariance = this->CalcualateTrICPCovarianceMtx(vectorSize, centerPCL, centerMCL);
 	}
@@ -390,10 +423,10 @@ void CloudRegistration::FindNearestNeighbor() {
 	this->nearestPts.clear();
 	this->squareDist.clear();
 	this->trimmedPts.clear();
-//#pragma omp parallel for
+#pragma omp parallel for
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
 			//cout << i << " ";
-			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 1000) == 0)
+			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 10000) == 0)
 				cout << this->nearestPts.size() << " neighbors found" << endl;
 			//Find minimum distance from points in the model set
 			double  query_pt[3] = { dataPCL.pts[i].dataPt.x, dataPCL.pts[i].dataPt.y, dataPCL.pts[i].dataPt.z };
