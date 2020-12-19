@@ -47,7 +47,7 @@ void CloudRegistration::AddNoiseToData(allPtCloud& dataPCL)
 	Mat noiseTranslation = Mat::zeros(3, 1, CV_64F);
 
 	/*add noisy rotation of some degs along z axis*/
-	double angle = 20. * (M_PI / 180.);
+	double angle = 30. * (M_PI / 180.);
 	noiseRotation.at<double>(0, 0) = cos(angle);
 	noiseRotation.at<double>(0, 1) = -sin(angle);
 	noiseRotation.at<double>(0, 2) = 0.;
@@ -423,11 +423,11 @@ void CloudRegistration::FindNearestNeighbor() {
 	this->nearestPts.clear();
 	this->squareDist.clear();
 	this->trimmedPts.clear();
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int i = 0; i < dataPCL.pts.size(); i++) {
 			//cout << i << " ";
-			if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 10000) == 0)
-				cout << this->nearestPts.size() << " neighbors found" << endl;
+			//if ((this->nearestPts.size() > 0) && (this->nearestPts.size() % 10000) == 0)
+			//	cout << this->nearestPts.size() << " neighbors found" << endl;
 			//Find minimum distance from points in the model set
 			double  query_pt[3] = { dataPCL.pts[i].dataPt.x, dataPCL.pts[i].dataPt.y, dataPCL.pts[i].dataPt.z };
 			myKDTree index(3, modelPCL, KDTreeSingleIndexAdaptorParams(10));
