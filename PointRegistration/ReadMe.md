@@ -36,7 +36,7 @@ For rotation angle of 30 degrees, comparison between ICP and TrICP is as follows
 
 | | |
 |:-------------------------:|:-------------------------:|
-|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_30degs00.png">  spat:1, rad:7 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_30deg00.png">  spat:1, rad:14 |
+|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_30degs00.png">  ICP, rot angle : 30 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_30deg00.png">  TrICP, rot angle : 30 |
 
 For rotation angle of 20 degrees, comparison between ICP and TrICP is as follows:
 |    Parameter  |      ICP      |  TrICP  |
@@ -46,7 +46,7 @@ For rotation angle of 20 degrees, comparison between ICP and TrICP is as follows
 
 | | |
 |:-------------------------:|:-------------------------:|
-|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_20degs00.png">  spat:1, rad:7 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_20deg00.png">  spat:1, rad:14 |
+|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_ICP_20degs00.png">  ICP, rot angle : 20 |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/Teapot_TrICP_20deg00.png">  TrICP, rot angle : 20 |
 
 
 
