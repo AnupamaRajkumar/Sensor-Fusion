@@ -28,6 +28,12 @@ Registered point cloud using TrICP for cow point cloud\
 
 ## Performance Comparison - ICP and TrICP ##
 
+Input dataset and introduced random rotation to the input dataset
+
+| | |
+|:-------------------------:|:-------------------------:|
+|<img width="1203" alt="BMF_1_7" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/TeapotModelSet.png">  Model set |<img width="1203" alt="BMF_1_14" src="https://github.com/AnupamaRajkumar/3DSensing_SensorFusion/blob/master/PointRegistration/Output/NoisyTeapot.png">  Model set with rotated data set |
+
 For rotation angle of 30 degrees, comparison between ICP and TrICP is as follows:
 |    Parameter  |      ICP      |  TrICP  |
 | ------------- |:-------------:| -------:|
