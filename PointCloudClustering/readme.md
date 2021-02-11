@@ -1,7 +1,7 @@
 # Clustering of Point Clouds #
 
 ## Input point cloud ##
-
+![Input](https://github.com/AnupamaRajkumar/Sensor-Fusion/blob/master/PointCloudClustering/Input/Input.png)
 ## Clustering based on Radius ##
 1. Radius : 20\
 ![RadiusCluster1](https://github.com/AnupamaRajkumar/Sensor-Fusion/blob/master/PointCloudClustering/Output/ClusteredCloud_RadiusBasedSearch20.png)
