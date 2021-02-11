@@ -208,10 +208,10 @@ void CloudClustering::KMeansClustering(std::vector<Utils::PointXYZRGB>& points) 
 		centroids.emplace_back(centroid);
 	}
 	std::cout << "Cluster centroids chosen randomly" << std::endl;
-
+	int iter = 0;
 	/*2. Assign all the points closest to the cluster centroid*/
 	do {
-		std::cout << "Calculating centroids in iteration number:" << iterations + 1 << std::endl;
+		std::cout << "Calculating centroids in iteration number:" << iter + 1 << std::endl;
 		for (int p = 0; p < points.size(); p++) {
 			double dist, minDist;
 			minDist = std::numeric_limits<double>::max();
@@ -241,8 +241,8 @@ void CloudClustering::KMeansClustering(std::vector<Utils::PointXYZRGB>& points) 
 			centroids[c].point.y = sumY / centroidCnt;
 			centroids[c].point.z = sumZ / centroidCnt;
 		}
-		this->iterations++;
-	} while (this->iterations < 10); /*Halt when the number of iterations have been achieved*/
+		iter++;
+	} while (iter < this->iterations); /*Halt when the number of iterations have been achieved*/
 
 	/*update the color of points depending on cluster assigned to them*/
 	for (int i = 0; i < points.size(); i++) {
