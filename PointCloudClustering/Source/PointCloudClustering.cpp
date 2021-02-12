@@ -7,7 +7,7 @@ CloudClustering::CloudClustering(char* fileName) {
 	this->fileName = fileName;				//name of the input point cloud file
 	this->clusterThreshold = 40.;			//thereshold for radius based neighbors determination
 	this->minClusterSize = 1500;			//cluster size, k value for nearest neighbor
-	this->iterations = 10;					//number of iterations for k-mean clustering
+	this->iterations = 5;					//number of iterations for k-mean clustering
 	this->numOfClusters = 10;				//number of clusters in k-mean clustering
 	this->CloudClusteringMenu();			//Invoking menu for cloud clustering
 }
@@ -68,6 +68,7 @@ void CloudClustering::EuclideanClusteringBasedOnRadius(std::vector<Utils::PointX
 	for (int i = 0; i < points.size(); i++) {	//clusterPtCloud.pts == points
 		/*check if the point is processed already or not. Pick those points that have not been assigned
 		   to any cluster yet*/
+		/*ref: https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_kdd_radius.cpp */
 		if ((points[i].red == 0) && (points[i].green == 0) && (points[i].blue == 0)) {
 			double queryPt[3] = { points[i].point.x, points[i].point.y, points[i].point.z };
 
@@ -132,6 +133,7 @@ void CloudClustering::EuclideanClusteringBasedOnKNN(std::vector<Utils::PointXYZR
 	for (int i = 0; i < points.size(); i++) {
 		/*check if the point is processed already or not. Pick those points that have not been assigned
 		  to any cluster yet*/
+		/* ref : https://github.com/jlblancoc/nanoflann/blob/master/examples/pointcloud_kdd_radius.cpp */
 		if ((points[i].red == 0) && (points[i].green == 0) && (points[i].blue == 0)) {
 			double queryPt[3] = { points[i].point.x, points[i].point.y, points[i].point.z };
 
